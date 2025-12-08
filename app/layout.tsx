@@ -22,15 +22,87 @@ const jua = Jua({
 })
 
 export const metadata: Metadata = {
-  title: 'Domia - Vos tournées optimisées, vos journées simplifiées',
-  description: 'L\'outil tout-en-un qui facilite le travail quotidien des indépendants du service à la personne.',
+  title: {
+    default: 'Domia - Vos tournées optimisées, vos journées simplifiées',
+    template: '%s | Domia'
+  },
+  description: 'L\'outil tout-en-un qui facilite le travail quotidien des indépendants du service à la personne. Gestion de clients, planning, optimisation de tournées, facturation et statistiques.',
+  keywords: [
+    'service à la personne',
+    'infirmière libérale',
+    'aide-soignante',
+    'aide à domicile',
+    'garde d\'enfants',
+    'agent d\'entretien',
+    'gestion clients',
+    'planning professionnel',
+    'optimisation tournées',
+    'facturation',
+    'logiciel professionnel',
+    'application mobile',
+    'domia'
+  ],
+  authors: [{ name: 'Domia' }],
+  creator: 'Domia',
+  publisher: 'Domia',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://domia.app'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: '/',
+    siteName: 'Domia',
+    title: 'Domia - Vos tournées optimisées, vos journées simplifiées',
+    description: 'L\'outil tout-en-un qui facilite le travail quotidien des indépendants du service à la personne.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Domia - Application de gestion pour professionnels du service à la personne',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Domia - Vos tournées optimisées, vos journées simplifiées',
+    description: 'L\'outil tout-en-un qui facilite le travail quotidien des indépendants du service à la personne.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    // google: 'your-google-verification-code',
+    // yandex: 'your-yandex-verification-code',
+  },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1.0,
-  userScalable: false,
+  maximumScale: 5.0,
+  userScalable: true,
   viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#3B82F6' },
+    { media: '(prefers-color-scheme: dark)', color: '#2563EB' },
+  ],
 }
 
 export default function RootLayout({
@@ -39,8 +111,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${fredoka.variable} ${jua.variable}`}>
+    <html lang="fr" className={`${fredoka.variable} ${jua.variable}`}>
       <body className={`${fredoka.className} overflow-x-hidden`}>
+        {/* Skip to main content link for accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--primary)] focus:text-white focus:rounded-lg focus:font-semibold"
+        >
+          Aller au contenu principal
+        </a>
         <AuthProvider>
           {children}
         </AuthProvider>

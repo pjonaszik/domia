@@ -22,11 +22,14 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
             if (!userId) return
             
             try {
-                const response = await apiClient.get('/api/auth/me')
-                const data = await response.json()
-                setIsAdmin(data.user?.isAdmin || false)
+                const response = await apiClient.get('/_/api/admin/check')
+                if (response.ok) {
+                    const data = await response.json()
+                    setIsAdmin(data.isAdmin || false)
+                }
             } catch (error) {
-                console.error('Failed to check admin status:', error)
+                // User is not an admin, which is fine
+                setIsAdmin(false)
             }
         }
 
@@ -42,7 +45,7 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
     ]
 
     return (
-        <div
+        <nav
             className="fixed bottom-0 left-0 right-0 bg-white flex justify-around z-[100]"
             style={{
                 borderTop: '4px solid var(--text-primary)',
@@ -50,6 +53,7 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
                 paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
                 boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.1)'
             }}
+            aria-label="Navigation principale"
         >
             {items.map((item) => {
                 const isActive = currentPage === item.id
@@ -66,6 +70,8 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
                             transform: isActive ? 'translateY(-4px)' : 'translateY(0)',
                             color: isActive ? 'var(--primary)' : 'var(--text-light)'
                         }}
+                        aria-label={`Aller à la page ${item.label}`}
+                        aria-current={isActive ? 'page' : undefined}
                         onMouseDown={(e) => {
                             e.currentTarget.style.transform = 'scale(0.85) translateY(2px)'
                             e.currentTarget.style.transition = 'transform 0.1s ease'
@@ -109,8 +115,9 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
                             style={{
                                 animation: isActive ? 'iconBounce 0.5s ease' : 'none'
                             }}
+                            aria-hidden="true"
                         >
-                            <i className={`fas ${item.icon}`}></i>
+                            <i className={`fas ${item.icon}`} aria-hidden="true"></i>
                         </div>
 
                         {/* Label */}
@@ -125,6 +132,6 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
                     </button>
                 )
             })}
-        </div>
+        </nav>
     )
 }

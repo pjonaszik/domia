@@ -50,6 +50,46 @@ const nextConfig: NextConfig = {
                     }] : []),
                 ],
             },
+            // Block robots from API routes
+            {
+                source: '/api/:path*',
+                headers: [
+                    {
+                        key: 'X-Robots-Tag',
+                        value: 'noindex, nofollow, noarchive, nosnippet',
+                    },
+                ],
+            },
+            // Block robots from dashboard routes
+            {
+                source: '/_/:path*',
+                headers: [
+                    {
+                        key: 'X-Robots-Tag',
+                        value: 'noindex, nofollow, noarchive, nosnippet',
+                    },
+                ],
+            },
+            // Block robots from login page
+            {
+                source: '/login',
+                headers: [
+                    {
+                        key: 'X-Robots-Tag',
+                        value: 'noindex, nofollow',
+                    },
+                ],
+            },
+            // Block robots from register page
+            {
+                source: '/register',
+                headers: [
+                    {
+                        key: 'X-Robots-Tag',
+                        value: 'noindex, nofollow',
+                    },
+                ],
+            },
         ]
     },
 }

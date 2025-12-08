@@ -75,25 +75,29 @@ export default function RegisterPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4" aria-label="Formulaire d'inscription">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-semibold text-primary mb-1">
+                            <label htmlFor="register-firstname" className="block text-sm font-semibold text-primary mb-1">
                                 Prénom
                             </label>
                             <input
+                                id="register-firstname"
                                 type="text"
+                                autoComplete="given-name"
                                 value={formData.firstName}
                                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                                 className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-primary mb-1">
+                            <label htmlFor="register-lastname" className="block text-sm font-semibold text-primary mb-1">
                                 Nom
                             </label>
                             <input
+                                id="register-lastname"
                                 type="text"
+                                autoComplete="family-name"
                                 value={formData.lastName}
                                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                                 className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
@@ -102,27 +106,32 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-primary mb-1">
+                        <label htmlFor="register-email" className="block text-sm font-semibold text-primary mb-1">
                             Email *
                         </label>
                         <input
+                            id="register-email"
                             type="email"
                             required
+                            autoComplete="email"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             placeholder="votre@email.com"
+                            aria-required="true"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-primary mb-1">
+                        <label htmlFor="register-profession" className="block text-sm font-semibold text-primary mb-1">
                             Profession
                         </label>
                         <select
+                            id="register-profession"
                             value={formData.profession}
                             onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                            aria-label="Sélectionner votre profession"
                         >
                             <option value="">Sélectionner une profession</option>
                             {professions.map((prof) => (
@@ -134,30 +143,38 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-primary mb-1">
+                        <label htmlFor="register-password" className="block text-sm font-semibold text-primary mb-1">
                             Mot de passe *
                         </label>
                         <input
+                            id="register-password"
                             type="password"
                             required
+                            autoComplete="new-password"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             placeholder="Au moins 8 caractères"
+                            aria-required="true"
+                            aria-describedby="password-help"
                         />
+                        <p id="password-help" className="sr-only">Le mot de passe doit contenir au moins 8 caractères</p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-primary mb-1">
+                        <label htmlFor="register-confirm-password" className="block text-sm font-semibold text-primary mb-1">
                             Confirmer le mot de passe *
                         </label>
                         <input
+                            id="register-confirm-password"
                             type="password"
                             required
+                            autoComplete="new-password"
                             value={formData.confirmPassword}
                             onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             placeholder="••••••••"
+                            aria-required="true"
                         />
                     </div>
 
@@ -165,6 +182,7 @@ export default function RegisterPage() {
                         type="submit"
                         disabled={loading}
                         className="btn-primary w-full"
+                        aria-busy={loading}
                     >
                         {loading ? 'Inscription...' : 'S\'inscrire'}
                     </button>

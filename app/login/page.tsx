@@ -43,32 +43,38 @@ export default function LoginPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4" aria-label="Formulaire de connexion">
                     <div>
-                        <label className="block text-sm font-semibold text-primary mb-1">
+                        <label htmlFor="login-email" className="block text-sm font-semibold text-primary mb-1">
                             Email
                         </label>
                         <input
+                            id="login-email"
                             type="email"
                             required
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             placeholder="votre@email.com"
+                            aria-required="true"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-primary mb-1">
+                        <label htmlFor="login-password" className="block text-sm font-semibold text-primary mb-1">
                             Mot de passe
                         </label>
                         <input
+                            id="login-password"
                             type="password"
                             required
+                            autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             placeholder="••••••••"
+                            aria-required="true"
                         />
                     </div>
 
@@ -76,6 +82,7 @@ export default function LoginPage() {
                         type="submit"
                         disabled={loading}
                         className="btn-primary w-full"
+                        aria-busy={loading}
                     >
                         {loading ? 'Connexion...' : 'Se connecter'}
                     </button>
