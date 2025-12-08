@@ -30,7 +30,7 @@ export function TourOptimizer({ appointments, onOptimized, onShowToast }: TourOp
             setLoading(true)
             const appointmentIds = appointments.map(apt => apt.id)
 
-            const response = await apiClient.post('/api/tours/optimize', {
+            const response = await apiClient.post('/_/api/tours/optimize', {
                 appointmentIds,
             })
 

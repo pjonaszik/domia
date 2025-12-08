@@ -34,7 +34,7 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
 
     const loadClients = async () => {
         try {
-            const response = await apiClient.get('/api/clients')
+            const response = await apiClient.get('/_/api/clients')
             if (response.ok) {
                 const data = await response.json()
                 setClients(data.clients || [])
@@ -62,7 +62,7 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
                 price: formData.price || undefined,
             }
 
-            const url = appointment ? `/api/appointments/${appointment.id}` : '/api/appointments'
+            const url = appointment ? `/api/appointments/${appointment.id}` : '/_/api/appointments'
 
             const response = appointment 
                 ? await apiClient.put(url, payload)

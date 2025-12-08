@@ -53,7 +53,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
 
     const loadClients = async () => {
         try {
-            const response = await apiClient.get('/api/clients')
+            const response = await apiClient.get('/_/api/clients')
             if (response.ok) {
                 const data = await response.json()
                 setClients(data.clients || [])
@@ -154,7 +154,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                 })),
             }
 
-            const url = invoice ? `/api/invoices/${invoice.id}` : '/api/invoices'
+            const url = invoice ? `/api/invoices/${invoice.id}` : '/_/api/invoices'
 
             const response = invoice 
                 ? await apiClient.put(url, payload)

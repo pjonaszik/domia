@@ -35,11 +35,6 @@ export const users = pgTable('users', {
     timezone: varchar('timezone', { length: 50 }).default('Europe/Paris'),
     language: varchar('language', { length: 10 }).default('fr'),
     
-    // Admin system
-    isAdmin: boolean('is_admin').default(false).notNull(),
-    adminGrantedAt: timestamp('admin_granted_at'),
-    adminGrantedBy: varchar('admin_granted_by', { length: 128 }),
-    
     // Timestamps
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -47,7 +42,40 @@ export const users = pgTable('users', {
 }, (table) => [
     index('user_email_idx').on(table.email),
     index('user_profession_idx').on(table.profession),
-    index('user_admin_idx').on(table.isAdmin),
+]);
+
+// Admins table - Separate table for administrators
+export const admins = pgTable('admins', {
+    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
+    
+    // Authentication
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    passwordHash: text('password_hash').notNull(),
+    emailVerified: boolean('email_verified').default(true).notNull(),
+    emailVerifiedAt: timestamp('email_verified_at').defaultNow(),
+    
+    // Profile
+    firstName: varchar('first_name', { length: 255 }),
+    lastName: varchar('last_name', { length: 255 }),
+    phone: varchar('phone', { length: 50 }),
+    
+    // Admin permissions
+    role: varchar('role', { length: 50 }).default('admin').notNull(), // 'admin', 'super_admin'
+    permissions: jsonb('permissions'), // JSON object with specific permissions
+    
+    // Admin metadata
+    grantedAt: timestamp('granted_at').defaultNow().notNull(),
+    grantedBy: varchar('granted_by', { length: 128 }), // ID of admin who granted access
+    isActive: boolean('is_active').default(true).notNull(),
+    
+    // Timestamps
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    lastLoginAt: timestamp('last_login_at'),
+}, (table) => [
+    index('admin_email_idx').on(table.email),
+    index('admin_role_idx').on(table.role),
+    index('admin_active_idx').on(table.isActive),
 ]);
 
 // Clients table
@@ -371,6 +399,8 @@ export const settingsRelations = relations(settings, ({ one }) => ({
 // Types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type Admin = typeof admins.$inferSelect;
+export type NewAdmin = typeof admins.$inferInsert;
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
 export type Service = typeof services.$inferSelect;

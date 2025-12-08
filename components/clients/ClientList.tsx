@@ -24,7 +24,7 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
     const loadClients = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get('/api/clients')
+            const response = await apiClient.get('/_/api/clients')
             if (!response.ok) throw new Error('Failed to load clients')
             const data = await response.json()
             setClients(data.clients || [])

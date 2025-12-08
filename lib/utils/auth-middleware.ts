@@ -15,23 +15,6 @@ export interface AuthResult {
     error?: string;
 }
 
-/**
- * Check if user is admin
- */
-export async function isAdmin(userId: string): Promise<boolean> {
-    try {
-        const [user] = await db
-            .select({ isAdmin: users.isAdmin })
-            .from(users)
-            .where(eq(users.id, userId))
-            .limit(1);
-        
-        return user?.isAdmin || false;
-    } catch (error) {
-        console.error('Error checking admin status:', error);
-        return false;
-    }
-}
 
 /**
  * Authenticate a request using JWT token

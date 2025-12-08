@@ -302,7 +302,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
     const fetchBannedUsers = async () => {
         setLoading(true)
         try {
-            const response = await apiClient.get('/api/admin/bans')
+            const response = await apiClient.get('/_/api/admin/bans')
             const data = await response.json()
             setBannedUsers(data.users || [])
         } catch (error) {
@@ -336,7 +336,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
     const fetchAdmins = async () => {
         setLoading(true)
         try {
-            const response = await apiClient.get('/api/admin/manage-admins')
+            const response = await apiClient.get('/_/api/admin/manage-admins')
             const data = await response.json()
             setAdmins(data.admins || [])
         } catch (error) {
@@ -349,7 +349,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
 
     const handleGrantAdmin = async (userId: string) => {
         try {
-            const response = await apiClient.post('/api/admin/manage-admins', {
+            const response = await apiClient.post('/_/api/admin/manage-admins', {
                 userId,
                 action: 'grant'
             })
@@ -397,7 +397,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
         if (!revokeAdminModal.userId) return
 
         try {
-            const response = await apiClient.post('/api/admin/manage-admins', {
+            const response = await apiClient.post('/_/api/admin/manage-admins', {
                 userId: revokeAdminModal.userId,
                 action: 'revoke'
             })
@@ -419,7 +419,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
     const fetchFlaggedUsers = async () => {
         setLoading(true)
         try {
-            const response = await apiClient.get('/api/admin/flagged-users')
+            const response = await apiClient.get('/_/api/admin/flagged-users')
             const data = await response.json()
             setFlaggedUsers(data.users || [])
         } catch (error) {
@@ -433,7 +433,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
     const fetchAbuseLogs = async () => {
         setLoading(true)
         try {
-            const response = await apiClient.get('/api/admin/abuse-logs?hours=48&limit=50')
+            const response = await apiClient.get('/_/api/admin/abuse-logs?hours=48&limit=50')
             const data = await response.json()
             setAbuseLogs(data.logs || [])
         } catch (error) {
@@ -472,7 +472,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
         }
 
         try {
-            const response = await apiClient.post('/api/admin/bans', {
+            const response = await apiClient.post('/_/api/admin/bans', {
                 userId: banUserId,
                 reason: banReason,
                 hours: banHours ? parseInt(banHours) : undefined
@@ -496,7 +496,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
 
     const handleUnbanUser = async (userId: string) => {
         try {
-            const response = await apiClient.delete('/api/admin/bans', { userId })
+            const response = await apiClient.delete('/_/api/admin/bans', { userId })
 
             if (response.ok) {
                 onShowToast('User unbanned successfully')
@@ -604,7 +604,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
         setLoading(true)
         try {
             // Fetch all battles (no limit or use a high limit)
-            const response = await apiClient.get('/api/admin/battles')
+            const response = await apiClient.get('/_/api/admin/battles')
             const data = await response.json()
             setBattles(data.battles || [])
         } catch (error) {
@@ -633,7 +633,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
         if (!deleteSessionModal.sessionId) return
 
         try {
-            const response = await apiClient.delete('/api/admin/game-sessions', { sessionId: deleteSessionModal.sessionId })
+            const response = await apiClient.delete('/_/api/admin/game-sessions', { sessionId: deleteSessionModal.sessionId })
 
             if (response.ok) {
                 onShowToast('✅ Game session deleted')
@@ -673,7 +673,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
         if (!deleteBattleModal.battleId) return
 
         try {
-            const response = await apiClient.delete('/api/admin/battles', { battleId: deleteBattleModal.battleId })
+            const response = await apiClient.delete('/_/api/admin/battles', { battleId: deleteBattleModal.battleId })
 
             if (response.ok) {
                 onShowToast('✅ Battle deleted successfully')
@@ -719,7 +719,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
         if (!resolveModal.battle || !resolveModal.selectedResult) return
 
         try {
-            const response = await apiClient.post('/api/battles/resolve', {
+            const response = await apiClient.post('/_/api/battles/resolve', {
                 battleId: resolveModal.battle.id,
                 result: resolveModal.selectedResult
             })
@@ -778,7 +778,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
         if (!cancelModal.battle) return
 
         try {
-            const response = await apiClient.post('/api/battles/cancel', {
+            const response = await apiClient.post('/_/api/battles/cancel', {
                 battleId: cancelModal.battle.id,
                 reason: cancelModal.reason
             })
@@ -818,7 +818,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
     const handleGenerateBattles = async () => {
         setGeneratingBattles(true)
         try {
-            const response = await apiClient.post('/api/battles/generate', {})
+            const response = await apiClient.post('/_/api/battles/generate', {})
 
             if (response.ok) {
                 const data = await response.json()
@@ -839,7 +839,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
     const handleResolveBattles = async () => {
         setResolvingBattles(true)
         try {
-            const response = await apiClient.post('/api/battles/auto-resolve', {})
+            const response = await apiClient.post('/_/api/battles/auto-resolve', {})
 
             if (response.ok) {
                 const data = await response.json()
@@ -935,7 +935,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
                 potAmount
             }
 
-            const endpoint = mode === 'create' ? '/api/battles/create' : '/api/battles/update'
+            const endpoint = mode === 'create' ? '/_/api/battles/create' : '/_/api/battles/update'
             const response = await apiClient.post(endpoint, payload)
 
             if (response.ok) {
@@ -1083,7 +1083,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
         }
 
         try {
-            const response = await apiClient.post('/api/admin/revenue', {
+            const response = await apiClient.post('/_/api/admin/revenue', {
                 amount,
                 note: withdrawalModal.note || null
             })
@@ -3266,7 +3266,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
                                     <button
                                         onClick={async () => {
                                             try {
-                                                const response = await apiClient.post('/api/admin/manage-admins', {
+                                                const response = await apiClient.post('/_/api/admin/manage-admins', {
                                                     userId: String(selectedUser.id),
                                                     action: 'grant'
                                                 })
@@ -3319,7 +3319,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
                                             <button
                                                 onClick={async () => {
                                                     try {
-                                                        const response = await apiClient.post('/api/admin/flag-user', {
+                                                        const response = await apiClient.post('/_/api/admin/flag-user', {
                                                             userId: String(selectedUser.id),
                                                             reason: 'Manually flagged by admin'
                                                         })
@@ -3349,7 +3349,7 @@ export function AdminSection({ onShowToast }: AdminSectionProps) {
                                     <button
                                         onClick={async () => {
                                             try {
-                                                const response = await apiClient.post('/api/admin/unban', {
+                                                const response = await apiClient.post('/_/api/admin/unban', {
                                                     userId: selectedUser.id
                                                 })
                                                 if (response.ok) {
