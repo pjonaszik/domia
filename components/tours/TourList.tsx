@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { TourCard } from './TourCard'
 import type { Tour } from '@/lib/db/schema'
 
@@ -13,6 +14,7 @@ interface TourListProps {
 }
 
 export function TourList({ onSelectTour, onShowToast }: TourListProps) {
+    const { t } = useLanguage()
     const [tours, setTours] = useState<Tour[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -29,7 +31,7 @@ export function TourList({ onSelectTour, onShowToast }: TourListProps) {
             setTours(data.tours || [])
         } catch (error) {
             console.error('Error loading tours:', error)
-            onShowToast?.('Erreur lors du chargement des tournées')
+            onShowToast?.(t('tours.errorLoading'))
         } finally {
             setLoading(false)
         }
@@ -40,7 +42,7 @@ export function TourList({ onSelectTour, onShowToast }: TourListProps) {
             <div className="card-3d">
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-[var(--primary)] mx-auto mb-4"></div>
-                    <p className="text-secondary">Chargement...</p>
+                    <p className="text-secondary">{t('common.loading')}</p>
                 </div>
             </div>
         )
@@ -50,7 +52,7 @@ export function TourList({ onSelectTour, onShowToast }: TourListProps) {
         <div className="space-y-4">
             {tours.length === 0 ? (
                 <div className="card-3d text-center py-8">
-                    <p className="text-secondary">Aucune tournée pour le moment</p>
+                    <p className="text-secondary">{t('tours.noToursYet')}</p>
                 </div>
             ) : (
                 <div className="space-y-3">

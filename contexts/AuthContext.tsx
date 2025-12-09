@@ -12,7 +12,7 @@ interface AuthContextType {
     loading: boolean
     error: string | null
     login: (email: string, password: string) => Promise<void>
-    register: (email: string, password: string, firstName?: string, lastName?: string, profession?: string) => Promise<void>
+    register: (email: string, password: string, firstName?: string, lastName?: string, profession?: string, siret?: string) => Promise<void>
     logout: () => void
     refreshUser: () => Promise<void>
     isAuthenticated: boolean
@@ -126,7 +126,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password: string,
         firstName?: string,
         lastName?: string,
-        profession?: string
+        profession?: string,
+        siret?: string
     ) => {
         try {
             setLoading(true)
@@ -135,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const response = await apiClient.publicRequest('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, firstName, lastName, profession }),
+                body: JSON.stringify({ email, password, firstName, lastName, profession, siret }),
             })
 
             if (!response.ok) {
@@ -178,8 +179,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Check if we have a token
             const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
             if (token) {
-                await refreshUser()
-            } else {
+                        await refreshUser()
+                } else {
                 setLoading(false)
             }
         }

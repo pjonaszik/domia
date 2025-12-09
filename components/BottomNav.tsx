@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats'
 
@@ -15,6 +16,7 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps) {
+    const { t } = useLanguage()
     const [isAdmin, setIsAdmin] = useState(false)
 
     useEffect(() => {
@@ -37,11 +39,11 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
     }, [userId])
 
     const items: Array<{ id: Page; label: string; icon: string }> = [
-        { id: 'home', label: 'ACCUEIL', icon: 'fa-home' },
-        { id: 'tours', label: 'TOURNÉES', icon: 'fa-route' },
-        { id: 'clients', label: 'CLIENTS', icon: 'fa-users' },
-        { id: 'calendar', label: 'PLANNING', icon: 'fa-calendar' },
-        { id: 'stats', label: 'STATS', icon: 'fa-chart-bar' },
+        { id: 'home', label: t('nav.home').toUpperCase(), icon: 'fa-home' },
+        { id: 'tours', label: t('nav.tours').toUpperCase(), icon: 'fa-route' },
+        { id: 'clients', label: t('nav.clients').toUpperCase(), icon: 'fa-users' },
+        { id: 'calendar', label: t('nav.planning').toUpperCase(), icon: 'fa-calendar' },
+        { id: 'stats', label: t('nav.stats').toUpperCase(), icon: 'fa-chart-bar' },
     ]
 
     return (
@@ -53,7 +55,7 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
                 paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
                 boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.1)'
             }}
-            aria-label="Navigation principale"
+            aria-label={t('nav.mainNav')}
         >
             {items.map((item) => {
                 const isActive = currentPage === item.id
@@ -70,7 +72,7 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
                             transform: isActive ? 'translateY(-4px)' : 'translateY(0)',
                             color: isActive ? 'var(--primary)' : 'var(--text-light)'
                         }}
-                        aria-label={`Aller à la page ${item.label}`}
+                        aria-label={t('nav.goToPage', { page: item.label })}
                         aria-current={isActive ? 'page' : undefined}
                         onMouseDown={(e) => {
                             e.currentTarget.style.transform = 'scale(0.85) translateY(2px)'

@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next'
 import { Fredoka, Jua } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 
 // Configure Fredoka font
 const fredoka = Fredoka({
@@ -120,9 +121,11 @@ export default function RootLayout({
         >
           Aller au contenu principal
         </a>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   )

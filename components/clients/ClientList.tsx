@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { ClientCard } from './ClientCard'
 import type { Client } from '@/lib/db/schema'
 
@@ -13,6 +14,7 @@ interface ClientListProps {
 }
 
 export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
+    const { t } = useLanguage()
     const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -30,7 +32,7 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
             setClients(data.clients || [])
         } catch (error) {
             console.error('Error loading clients:', error)
-            onShowToast?.('Erreur lors du chargement des clients')
+            onShowToast?.(t('clients.errorLoading'))
         } finally {
             setLoading(false)
         }
@@ -52,7 +54,7 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
             <div className="card-3d">
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-[var(--primary)] mx-auto mb-4"></div>
-                    <p className="text-secondary">Chargement...</p>
+                    <p className="text-secondary">{t('common.loading')}</p>
                 </div>
             </div>
         )
@@ -64,21 +66,23 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
                 <div className="flex gap-2 mb-4">
                     <input
                         type="text"
-                        placeholder="Rechercher un client..."
+                        placeholder={t('clients.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex-1 px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     />
                 </div>
                 <div className="text-sm text-secondary mb-2">
-                    {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''}
+                    {filteredClients.length === 1 
+                        ? t('clients.clientCount', { count: '1' })
+                        : t('clients.clientCountPlural', { count: String(filteredClients.length) })}
                 </div>
             </div>
 
             {filteredClients.length === 0 ? (
                 <div className="card-3d text-center py-8">
                     <p className="text-secondary">
-                        {searchTerm ? 'Aucun client trouvé' : 'Aucun client pour le moment'}
+                        {searchTerm ? t('clients.noClientsFound') : t('clients.noClientsYet')}
                     </p>
                 </div>
             ) : (

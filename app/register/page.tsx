@@ -5,11 +5,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { Toast } from '@/components/Toast'
+import { LanguageSelector } from '@/components/LanguageSelector'
 
 export default function RegisterPage() {
     const router = useRouter()
     const { register } = useAuth()
+    const { t } = useLanguage()
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -17,6 +20,7 @@ export default function RegisterPage() {
         firstName: '',
         lastName: '',
         profession: '',
+        siret: '',
     })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -36,13 +40,28 @@ export default function RegisterPage() {
         setError('')
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Les mots de passe ne correspondent pas')
+            setError(t('auth.passwordMismatch'))
             setLoading(false)
             return
         }
 
         if (formData.password.length < 8) {
-            setError('Le mot de passe doit contenir au moins 8 caractères')
+            setError(t('auth.passwordMinLength'))
+            setLoading(false)
+            return
+        }
+
+        // Validate SIRET format (14 digits)
+        if (!formData.siret) {
+            setError(t('auth.siretRequired'))
+            setLoading(false)
+            return
+        }
+
+        const siretRegex = /^\d{14}$/
+        const siretCleaned = formData.siret.replace(/\s/g, '')
+        if (!siretRegex.test(siretCleaned)) {
+            setError(t('auth.siretInvalid'))
             setLoading(false)
             return
         }
@@ -53,12 +72,14 @@ export default function RegisterPage() {
                 formData.password,
                 formData.firstName || undefined,
                 formData.lastName || undefined,
-                formData.profession || undefined
+                formData.profession || undefined,
+                siretCleaned
             )
             router.push('/')
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erreur lors de l\'inscription')
-            setToast({ message: err instanceof Error ? err.message : 'Erreur lors de l\'inscription', show: true })
+            const errorMsg = err instanceof Error ? err.message : t('auth.registerError')
+            setError(errorMsg)
+            setToast({ message: errorMsg, show: true })
         } finally {
             setLoading(false)
         }
@@ -66,8 +87,11 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-screen bg-checkered flex items-center justify-center p-4">
+            <div className="absolute top-4 right-4">
+                <LanguageSelector />
+            </div>
             <div className="card-3d max-w-md w-full">
-                <h1 className="text-2xl font-bold text-primary mb-6 text-center">Inscription</h1>
+                <h1 className="text-2xl font-bold text-primary mb-6 text-center">{t('auth.register')}</h1>
                 
                 {error && (
                     <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
@@ -75,11 +99,11 @@ export default function RegisterPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4" aria-label="Formulaire d'inscription">
+                <form onSubmit={handleSubmit} className="space-y-4" aria-label={t('auth.register')}>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="register-firstname" className="block text-sm font-semibold text-primary mb-1">
-                                Prénom
+                                {t('auth.firstName')}
                             </label>
                             <input
                                 id="register-firstname"
@@ -92,7 +116,7 @@ export default function RegisterPage() {
                         </div>
                         <div>
                             <label htmlFor="register-lastname" className="block text-sm font-semibold text-primary mb-1">
-                                Nom
+                                {t('auth.lastName')}
                             </label>
                             <input
                                 id="register-lastname"
@@ -107,7 +131,7 @@ export default function RegisterPage() {
 
                     <div>
                         <label htmlFor="register-email" className="block text-sm font-semibold text-primary mb-1">
-                            Email *
+                            {t('auth.email')} *
                         </label>
                         <input
                             id="register-email"
@@ -124,7 +148,7 @@ export default function RegisterPage() {
 
                     <div>
                         <label htmlFor="register-profession" className="block text-sm font-semibold text-primary mb-1">
-                            Profession
+                            {t('auth.profession')}
                         </label>
                         <select
                             id="register-profession"
@@ -143,8 +167,45 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
+                        <label htmlFor="register-siret" className="block text-sm font-semibold text-primary mb-1">
+                            {t('auth.siret')} *
+                        </label>
+                        <input
+                            id="register-siret"
+                            type="text"
+                            required
+                            value={formData.siret}
+                            onChange={(e) => {
+                                // Only allow digits, remove all non-digits
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 14)
+                                // Format with spaces: 123 456 789 01234
+                                let formatted = digitsOnly
+                                if (digitsOnly.length > 3) {
+                                    formatted = digitsOnly.slice(0, 3) + ' ' + digitsOnly.slice(3)
+                                }
+                                if (digitsOnly.length > 6) {
+                                    formatted = digitsOnly.slice(0, 3) + ' ' + digitsOnly.slice(3, 6) + ' ' + digitsOnly.slice(6)
+                                }
+                                if (digitsOnly.length > 9) {
+                                    formatted = digitsOnly.slice(0, 3) + ' ' + digitsOnly.slice(3, 6) + ' ' + digitsOnly.slice(6, 9) + ' ' + digitsOnly.slice(9)
+                                }
+                                setFormData({ ...formData, siret: formatted })
+                            }}
+                            className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                            placeholder="123 456 789 01234"
+                            aria-required="true"
+                            aria-describedby="siret-help"
+                        />
+                        <div id="siret-help" className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-xs text-[var(--text-primary)]">
+                                <strong className="text-[var(--primary)]">⚠️ Important :</strong> {t('auth.siretNotice')}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
                         <label htmlFor="register-password" className="block text-sm font-semibold text-primary mb-1">
-                            Mot de passe *
+                            {t('auth.password')} *
                         </label>
                         <input
                             id="register-password"
@@ -163,7 +224,7 @@ export default function RegisterPage() {
 
                     <div>
                         <label htmlFor="register-confirm-password" className="block text-sm font-semibold text-primary mb-1">
-                            Confirmer le mot de passe *
+                            {t('auth.confirmPassword')} *
                         </label>
                         <input
                             id="register-confirm-password"
@@ -184,15 +245,15 @@ export default function RegisterPage() {
                         className="btn-primary w-full"
                         aria-busy={loading}
                     >
-                        {loading ? 'Inscription...' : 'S\'inscrire'}
+                        {loading ? t('common.loading') : t('auth.registerButton')}
                     </button>
                 </form>
 
                 <div className="mt-4 text-center">
                     <p className="text-sm text-secondary">
-                        Déjà un compte ?{' '}
+                        {t('auth.alreadyHaveAccount')}{' '}
                         <a href="/login" className="text-[var(--primary)] font-semibold">
-                            Se connecter
+                            {t('auth.login')}
                         </a>
                     </p>
                 </div>

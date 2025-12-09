@@ -3,23 +3,30 @@
 'use client'
 
 import '@fortawesome/fontawesome-free/css/all.min.css'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { LanguageSelector } from '@/components/LanguageSelector'
 
 export function LandingPage() {
+    const { t } = useLanguage()
+    
     return (
         <div className="min-h-screen bg-gradient-to-b from-[var(--bg-secondary)] to-white">
+            <div className="absolute top-4 right-4 z-10">
+                <LanguageSelector />
+            </div>
             <main id="main-content">
             {/* Hero Section */}
             <section aria-labelledby="hero-title" className="container mx-auto px-5 pt-20 pb-12 text-center">
                 <div className="max-w-3xl mx-auto">
                     <div className="mb-6">
                         <h1 id="hero-title" className="text-5xl md:text-6xl font-bold text-primary mb-4">
-                            Domia
+                            {t('landing.title')}
                         </h1>
                         <p className="text-2xl md:text-3xl text-secondary font-semibold mb-6">
-                            Vos tournées optimisées, vos journées simplifiées
+                            {t('landing.subtitle')}
                         </p>
                         <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
-                            L'outil tout-en-un qui facilite le travail quotidien des indépendants du service à la personne.
+                            {t('landing.description')}
                         </p>
                     </div>
                     
@@ -27,17 +34,17 @@ export function LandingPage() {
                         <a 
                             href="/register" 
                             className="btn-primary px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-                            aria-label="Créer un compte gratuitement sur Domia"
+                            aria-label={t('landing.getStarted')}
                         >
                             <i className="fas fa-rocket mr-2" aria-hidden="true"></i>
-                            Commencer gratuitement
+                            {t('landing.getStarted')}
                         </a>
                         <a 
                             href="/login" 
                             className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-all"
-                            aria-label="Se connecter à votre compte Domia"
+                            aria-label={t('landing.login')}
                         >
-                            Se connecter
+                            {t('landing.login')}
                         </a>
                     </div>
                 </div>

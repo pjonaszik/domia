@@ -4,6 +4,7 @@
 
 import { useState } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 import type { Client } from '@/lib/db/schema'
 
 interface ClientFormProps {
@@ -14,6 +15,7 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientFormProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         firstName: client?.firstName || '',
@@ -43,14 +45,14 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
 
             if (!response.ok) {
                 const data = await response.json()
-                throw new Error(data.error || 'Erreur lors de la sauvegarde')
+                throw new Error(data.error || t('clients.errorSaving'))
             }
 
-            onShowToast?.(client ? 'Client mis à jour' : 'Client créé')
+            onShowToast?.(client ? t('clients.clientUpdated') : t('clients.clientCreated'))
             onSave()
         } catch (error) {
             console.error('Error saving client:', error)
-            onShowToast?.(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde')
+            onShowToast?.(error instanceof Error ? error.message : t('clients.errorSaving'))
         } finally {
             setLoading(false)
         }
@@ -59,13 +61,13 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
     return (
         <form onSubmit={handleSubmit} className="card-3d space-y-4">
             <h2 className="text-xl font-bold text-primary mb-4">
-                {client ? 'Modifier le client' : 'Nouveau client'}
+                {client ? t('clients.editClient') : t('clients.newClient')}
             </h2>
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-semibold text-primary mb-1">
-                        Prénom *
+                        {t('clients.firstName')} *
                     </label>
                     <input
                         type="text"
@@ -77,7 +79,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
                 </div>
                 <div>
                     <label className="block text-sm font-semibold text-primary mb-1">
-                        Nom *
+                        {t('clients.lastName')} *
                     </label>
                     <input
                         type="text"
@@ -91,7 +93,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Téléphone
+                    {t('clients.phone')}
                 </label>
                 <input
                     type="tel"
@@ -103,7 +105,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Email
+                    {t('clients.email')}
                 </label>
                 <input
                     type="email"
@@ -115,7 +117,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Adresse *
+                    {t('clients.address')} *
                 </label>
                 <input
                     type="text"
@@ -129,7 +131,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-semibold text-primary mb-1">
-                        Code postal *
+                        {t('clients.postalCode')} *
                     </label>
                     <input
                         type="text"
@@ -141,7 +143,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
                 </div>
                 <div>
                     <label className="block text-sm font-semibold text-primary mb-1">
-                        Ville *
+                        {t('clients.city')} *
                     </label>
                     <input
                         type="text"
@@ -155,7 +157,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Notes
+                    {t('clients.notes')}
                 </label>
                 <textarea
                     value={formData.notes}
@@ -167,7 +169,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Notes médicales
+                    {t('clients.medicalNotes')}
                 </label>
                 <textarea
                     value={formData.medicalNotes}
@@ -179,7 +181,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Allergies
+                    {t('clients.allergies')}
                 </label>
                 <input
                     type="text"
@@ -198,7 +200,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
                     className="w-4 h-4"
                 />
                 <label htmlFor="isActive" className="text-sm font-semibold text-primary">
-                    Client actif
+                    {t('clients.activeClient')}
                 </label>
             </div>
 
@@ -208,14 +210,14 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
                     disabled={loading}
                     className="btn-primary flex-1"
                 >
-                    {loading ? 'Enregistrement...' : 'Enregistrer'}
+                    {loading ? t('common.loading') : t('common.save')}
                 </button>
                 <button
                     type="button"
                     onClick={onCancel}
                     className="px-6 py-3 border-2 border-[var(--text-light)] rounded-full text-[var(--text-light)] font-semibold"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
             </div>
         </form>

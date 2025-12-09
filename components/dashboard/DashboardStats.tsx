@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Stats {
     clients: { total: number }
@@ -12,6 +13,7 @@ interface Stats {
 }
 
 export function DashboardStats() {
+    const { t } = useLanguage()
     const [stats, setStats] = useState<Stats | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -38,7 +40,7 @@ export function DashboardStats() {
             <div className="card-3d">
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-[var(--primary)] mx-auto mb-4"></div>
-                    <p className="text-secondary">Chargement...</p>
+                    <p className="text-secondary">{t('common.loading')}</p>
                 </div>
             </div>
         )
@@ -47,7 +49,7 @@ export function DashboardStats() {
     if (!stats) {
         return (
             <div className="card-3d">
-                <p className="text-secondary">Aucune statistique disponible</p>
+                    <p className="text-secondary">{t('dashboard.noStats')}</p>
             </div>
         )
     }
@@ -55,44 +57,44 @@ export function DashboardStats() {
     return (
         <div className="space-y-4">
             <div className="card-3d">
-                <h2 className="text-xl font-bold text-primary mb-4">Statistiques</h2>
+                <h2 className="text-xl font-bold text-primary mb-4">{t('dashboard.statistics')}</h2>
                 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="stat-card">
-                        <p className="text-sm text-secondary mb-1">Clients</p>
+                        <p className="text-sm text-secondary mb-1">{t('dashboard.clients')}</p>
                         <p className="text-2xl font-bold text-primary">{stats.clients.total}</p>
                     </div>
                     <div className="stat-card">
-                        <p className="text-sm text-secondary mb-1">Rendez-vous</p>
+                        <p className="text-sm text-secondary mb-1">{t('dashboard.appointments')}</p>
                         <p className="text-2xl font-bold text-primary">{stats.appointments.total}</p>
                     </div>
                 </div>
 
                 <div className="stat-card mb-4">
-                    <p className="text-sm text-secondary mb-1">Taux de complétion</p>
+                    <p className="text-sm text-secondary mb-1">{t('dashboard.completionRate')}</p>
                     <p className="text-2xl font-bold text-primary">
                         {stats.appointments.completionRate.toFixed(1)}%
                     </p>
                 </div>
 
                 <div className="border-t-2 border-[var(--primary)] pt-4">
-                    <h3 className="font-semibold text-primary mb-3">Revenus</h3>
+                    <h3 className="font-semibold text-primary mb-3">{t('dashboard.revenue')}</h3>
                     <div className="space-y-2">
                         <div className="flex justify-between">
-                            <span className="text-secondary">Total payé:</span>
+                            <span className="text-secondary">{t('dashboard.totalPaid')}:</span>
                             <span className="font-semibold text-primary">
                                 {stats.revenue.total.toFixed(2)} €
                             </span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-secondary">En attente:</span>
+                            <span className="text-secondary">{t('dashboard.pending')}:</span>
                             <span className="font-semibold text-orange-600">
                                 {stats.revenue.pending.toFixed(2)} €
                             </span>
                         </div>
                         <div className="flex justify-between text-sm text-secondary mt-2">
-                            <span>Factures: {stats.revenue.invoices.total}</span>
-                            <span>Payées: {stats.revenue.invoices.paid}</span>
+                            <span>{t('dashboard.invoices')}: {stats.revenue.invoices.total}</span>
+                            <span>{t('dashboard.paid')}: {stats.revenue.invoices.paid}</span>
                         </div>
                     </div>
                 </div>

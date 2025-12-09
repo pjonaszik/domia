@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { InvoiceCard } from './InvoiceCard'
 import type { Invoice } from '@/lib/db/schema'
 
@@ -14,6 +15,7 @@ interface InvoiceListProps {
 }
 
 export function InvoiceList({ clientId, onSelectInvoice, onShowToast }: InvoiceListProps) {
+    const { t } = useLanguage()
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [loading, setLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -35,7 +37,7 @@ export function InvoiceList({ clientId, onSelectInvoice, onShowToast }: InvoiceL
             setInvoices(data.invoices || [])
         } catch (error) {
             console.error('Error loading invoices:', error)
-            onShowToast?.('Erreur lors du chargement des factures')
+            onShowToast?.(t('invoices.errorLoading'))
         } finally {
             setLoading(false)
         }
@@ -46,7 +48,7 @@ export function InvoiceList({ clientId, onSelectInvoice, onShowToast }: InvoiceL
             <div className="card-3d">
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-[var(--primary)] mx-auto mb-4"></div>
-                    <p className="text-secondary">Chargement...</p>
+                    <p className="text-secondary">{t('common.loading')}</p>
                 </div>
             </div>
         )
@@ -61,21 +63,23 @@ export function InvoiceList({ clientId, onSelectInvoice, onShowToast }: InvoiceL
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     >
-                        <option value="all">Tous les statuts</option>
-                        <option value="draft">Brouillon</option>
-                        <option value="sent">Envoyée</option>
-                        <option value="paid">Payée</option>
-                        <option value="overdue">En retard</option>
+                        <option value="all">{t('invoices.allStatuses')}</option>
+                        <option value="draft">{t('invoices.draft')}</option>
+                        <option value="sent">{t('invoices.sent')}</option>
+                        <option value="paid">{t('invoices.paid')}</option>
+                        <option value="overdue">{t('invoices.overdue')}</option>
                     </select>
                 </div>
                 <div className="text-sm text-secondary">
-                    {invoices.length} facture{invoices.length > 1 ? 's' : ''}
+                    {invoices.length === 1 
+                        ? t('invoices.invoiceCount', { count: '1' })
+                        : t('invoices.invoiceCountPlural', { count: String(invoices.length) })}
                 </div>
             </div>
 
             {invoices.length === 0 ? (
                 <div className="card-3d text-center py-8">
-                    <p className="text-secondary">Aucune facture</p>
+                    <p className="text-secondary">{t('invoices.noInvoices')}</p>
                 </div>
             ) : (
                 <div className="space-y-3">

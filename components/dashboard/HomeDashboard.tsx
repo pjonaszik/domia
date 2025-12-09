@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
 import { isToday, isTomorrow } from 'date-fns'
 import type { User, Appointment, Tour } from '@/lib/db/schema'
+import { useLanguage } from '@/contexts/LanguageContext'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface HomeDashboardProps {
@@ -22,6 +23,7 @@ interface QuickStats {
 }
 
 export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardProps) {
+    const { t } = useLanguage()
     const [stats, setStats] = useState<QuickStats | null>(null)
     const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([])
     const [todayTours, setTodayTours] = useState<Tour[]>([])
@@ -89,7 +91,7 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
             }
         } catch (error) {
             console.error('Error loading dashboard data:', error)
-            onShowToast?.('Erreur lors du chargement des données')
+            onShowToast?.(t('dashboard.errorLoading'))
         } finally {
             setLoading(false)
         }
@@ -101,7 +103,7 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                 <div className="card-3d">
                     <div className="text-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-[var(--primary)] mx-auto mb-4"></div>
-                        <p className="text-secondary">Chargement...</p>
+                        <p className="text-secondary">{t('common.loading')}</p>
                     </div>
                 </div>
             </div>
@@ -115,10 +117,10 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                 <div className="flex items-center justify-between mb-2">
                     <div>
                         <h2 className="text-2xl font-bold text-primary">
-                            Bonjour, {user.firstName || 'Utilisateur'} 👋
+                            {t('dashboard.welcomeUser', { name: user.firstName || t('common.user') })} 👋
                         </h2>
                         <p className="text-secondary text-sm mt-1">
-                            {user.profession || 'Professionnel du service à la personne'}
+                            {user.profession || t('dashboard.profession')}
                         </p>
                     </div>
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-white text-2xl font-bold">
@@ -127,7 +129,7 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                 </div>
                 <div className="mt-4 pt-4 border-t-2 border-[var(--tertiary)]">
                     <p className="text-sm text-secondary italic">
-                        "Vos tournées optimisées, vos journées simplifiées"
+                        "{t('dashboard.tagline')}"
                     </p>
                 </div>
             </div>
@@ -140,7 +142,7 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                             <i className="fas fa-users text-[var(--primary)]"></i>
                         </div>
                     </div>
-                    <p className="text-xs text-secondary mb-1">Clients</p>
+                    <p className="text-xs text-secondary mb-1">{t('dashboard.clients')}</p>
                     <p className="text-2xl font-bold text-primary">{stats?.clients || 0}</p>
                 </div>
 
@@ -150,7 +152,7 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                             <i className="fas fa-calendar-check text-[var(--secondary)]"></i>
                         </div>
                     </div>
-                    <p className="text-xs text-secondary mb-1">Aujourd'hui</p>
+                    <p className="text-xs text-secondary mb-1">{t('dashboard.today')}</p>
                     <p className="text-2xl font-bold text-primary">{stats?.todayAppointments || 0}</p>
                 </div>
 
@@ -160,7 +162,7 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                             <i className="fas fa-route text-purple-600"></i>
                         </div>
                     </div>
-                    <p className="text-xs text-secondary mb-1">Tournées</p>
+                    <p className="text-xs text-secondary mb-1">{t('dashboard.todayTours')}</p>
                     <p className="text-2xl font-bold text-primary">{stats?.todayTours || 0}</p>
                 </div>
 
@@ -170,7 +172,7 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                             <i className="fas fa-euro-sign text-green-600"></i>
                         </div>
                     </div>
-                    <p className="text-xs text-secondary mb-1">Ce mois</p>
+                    <p className="text-xs text-secondary mb-1">{t('dashboard.monthlyRevenue')}</p>
                     <p className="text-2xl font-bold text-primary">
                         {(stats?.monthlyRevenue || 0).toFixed(0)} €
                     </p>
@@ -179,39 +181,39 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
 
             {/* Quick Actions */}
             <div className="card-3d">
-                <h3 className="text-lg font-bold text-primary mb-3">Actions rapides</h3>
+                <h3 className="text-lg font-bold text-primary mb-3">{t('dashboard.quickActions')}</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <button
                         onClick={() => onNavigate?.('clients')}
                         className="flex items-center gap-3 p-4 rounded-lg border-2 border-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-all"
-                        aria-label="Créer un nouveau client"
+                        aria-label={t('dashboard.createNewClient')}
                     >
                         <i className="fas fa-user-plus text-xl" aria-hidden="true"></i>
-                        <span className="font-semibold">Nouveau client</span>
+                        <span className="font-semibold">{t('dashboard.newClient')}</span>
                     </button>
                     <button
                         onClick={() => onNavigate?.('calendar')}
                         className="flex items-center gap-3 p-4 rounded-lg border-2 border-[var(--secondary)] hover:bg-[var(--secondary)] hover:text-white transition-all"
-                        aria-label="Créer un nouveau rendez-vous"
+                        aria-label={t('dashboard.createNewAppointment')}
                     >
                         <i className="fas fa-calendar-plus text-xl" aria-hidden="true"></i>
-                        <span className="font-semibold">Nouveau RDV</span>
+                        <span className="font-semibold">{t('dashboard.newAppointment')}</span>
                     </button>
                     <button
                         onClick={() => onNavigate?.('tours')}
                         className="flex items-center gap-3 p-4 rounded-lg border-2 border-purple-500 hover:bg-purple-500 hover:text-white transition-all"
-                        aria-label="Optimiser une tournée"
+                        aria-label={t('dashboard.optimizeTour')}
                     >
                         <i className="fas fa-route text-xl" aria-hidden="true"></i>
-                        <span className="font-semibold">Optimiser</span>
+                        <span className="font-semibold">{t('dashboard.optimize')}</span>
                     </button>
                     <button
                         onClick={() => onNavigate?.('calendar')}
                         className="flex items-center gap-3 p-4 rounded-lg border-2 border-orange-500 hover:bg-orange-500 hover:text-white transition-all"
-                        aria-label="Voir le planning"
+                        aria-label={t('dashboard.viewPlanning')}
                     >
                         <i className="fas fa-calendar-alt text-xl" aria-hidden="true"></i>
-                        <span className="font-semibold">Planning</span>
+                        <span className="font-semibold">{t('nav.planning')}</span>
                     </button>
                 </div>
             </div>
@@ -220,13 +222,13 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
             {upcomingAppointments.length > 0 && (
                 <div className="card-3d">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-bold text-primary">Prochains rendez-vous</h3>
+                        <h3 className="text-lg font-bold text-primary">{t('dashboard.nextAppointments')}</h3>
                     <button
                         onClick={() => onNavigate?.('calendar')}
                         className="text-sm text-[var(--primary)] font-semibold hover:underline"
-                        aria-label="Voir tous les rendez-vous"
+                        aria-label={t('dashboard.viewAllAppointments')}
                     >
-                        Voir tout
+                        {t('dashboard.viewAll')}
                     </button>
                     </div>
                     <div className="space-y-2">
@@ -251,13 +253,13 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                                                     {aptDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                                 </time>
                                                 {(isTodayAppt || isTomorrowAppt) && (
-                                                    <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--secondary)] text-white" aria-label={isTodayAppt ? "Aujourd'hui" : "Demain"}>
-                                                        {isTodayAppt ? "Aujourd'hui" : "Demain"}
+                                                    <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--secondary)] text-white" aria-label={isTodayAppt ? t('dashboard.today') : t('dashboard.tomorrow')}>
+                                                        {isTodayAppt ? t('dashboard.today') : t('dashboard.tomorrow')}
                                                     </span>
                                                 )}
                                             </div>
                                             <p className="text-sm text-secondary">
-                                                {appointment.serviceName || appointment.notes || 'Rendez-vous'}
+                                                {appointment.serviceName || appointment.notes || t('dashboard.appointment')}
                                             </p>
                                         </div>
                                         <i className="fas fa-chevron-right text-[var(--text-light)]" aria-hidden="true"></i>
@@ -273,13 +275,13 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
             {todayTours.length > 0 && (
                 <div className="card-3d">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-bold text-primary">Tournées du jour</h3>
+                        <h3 className="text-lg font-bold text-primary">{t('dashboard.todayToursTitle')}</h3>
                         <button
                             onClick={() => onNavigate?.('tours')}
                             className="text-sm text-[var(--primary)] font-semibold hover:underline"
-                            aria-label="Voir toutes les tournées"
+                            aria-label={t('dashboard.viewAllTours')}
                         >
-                            Voir tout
+                            {t('dashboard.viewAll')}
                         </button>
                     </div>
                     <div className="space-y-2">
@@ -298,12 +300,12 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                                         </div>
                                         <div>
                                             <p className="font-semibold text-primary">
-                                                {tour.name || 'Tournée'}
+                                                {tour.name || t('dashboard.tour')}
                                             </p>
                                             <p className="text-xs text-secondary">
                                                 {tour.optimizedOrder && Array.isArray(tour.optimizedOrder) 
                                                     ? (tour.optimizedOrder as string[]).length 
-                                                    : 0} rendez-vous
+                                                    : 0} {t('dashboard.appointmentPlural')}
                                             </p>
                                         </div>
                                     </div>
@@ -319,13 +321,13 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
             {upcomingAppointments.length === 0 && todayTours.length === 0 && (
                 <div className="card-3d text-center py-8">
                     <i className="fas fa-calendar-check text-4xl text-[var(--text-light)] mb-4"></i>
-                    <p className="text-secondary mb-2">Aucun rendez-vous prévu aujourd'hui</p>
+                    <p className="text-secondary mb-2">{t('dashboard.noAppointments')}</p>
                     <button
                         onClick={() => onNavigate?.('calendar')}
                         className="text-sm text-[var(--primary)] font-semibold hover:underline"
-                        aria-label="Créer un nouveau rendez-vous"
+                        aria-label={t('dashboard.createNewAppointment')}
                     >
-                        Créer un rendez-vous
+                        {t('dashboard.createAppointment')}
                     </button>
                 </div>
             )}

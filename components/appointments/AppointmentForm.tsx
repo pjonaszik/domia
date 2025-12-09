@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 import type { Appointment, Client } from '@/lib/db/schema'
 
 interface AppointmentFormProps {
@@ -15,6 +16,7 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ appointment, clientId, onSave, onCancel, onShowToast }: AppointmentFormProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<Client[]>([])
     const [formData, setFormData] = useState({
@@ -70,14 +72,14 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
 
             if (!response.ok) {
                 const data = await response.json()
-                throw new Error(data.error || 'Erreur lors de la sauvegarde')
+                throw new Error(data.error || t('appointments.errorSaving'))
             }
 
-            onShowToast?.(appointment ? 'Rendez-vous mis à jour' : 'Rendez-vous créé')
+            onShowToast?.(appointment ? t('appointments.appointmentUpdated') : t('appointments.appointmentCreated'))
             onSave()
         } catch (error) {
             console.error('Error saving appointment:', error)
-            onShowToast?.(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde')
+            onShowToast?.(error instanceof Error ? error.message : t('appointments.errorSaving'))
         } finally {
             setLoading(false)
         }
@@ -86,12 +88,12 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
     return (
         <form onSubmit={handleSubmit} className="card-3d space-y-4">
             <h2 className="text-xl font-bold text-primary mb-4">
-                {appointment ? 'Modifier le rendez-vous' : 'Nouveau rendez-vous'}
+                {appointment ? t('appointments.editAppointment') : t('appointments.newAppointment')}
             </h2>
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Client *
+                    {t('appointments.client')} *
                 </label>
                 <select
                     required
@@ -100,7 +102,7 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
                     disabled={!!clientId}
                     className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 >
-                    <option value="">Sélectionner un client</option>
+                    <option value="">{t('clients.selectClient')}</option>
                     {clients.map((client) => (
                         <option key={client.id} value={client.id}>
                             {client.firstName} {client.lastName}
@@ -111,7 +113,7 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Date et heure *
+                    {t('appointments.startTime')} *
                 </label>
                 <input
                     type="datetime-local"
@@ -124,7 +126,7 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Durée (minutes) *
+                    {t('appointments.duration')} *
                 </label>
                 <input
                     type="number"
@@ -139,7 +141,7 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Type de service
+                    {t('appointments.service')}
                 </label>
                 <input
                     type="text"
@@ -152,7 +154,7 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Prix (€)
+                    {t('appointments.price')} (€)
                 </label>
                 <input
                     type="number"
@@ -165,7 +167,7 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Notes
+                    {t('appointments.notes')}
                 </label>
                 <textarea
                     value={formData.notes}
@@ -181,14 +183,14 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
                     disabled={loading}
                     className="btn-primary flex-1"
                 >
-                    {loading ? 'Enregistrement...' : 'Enregistrer'}
+                    {loading ? t('common.loading') : t('common.save')}
                 </button>
                 <button
                     type="button"
                     onClick={onCancel}
                     className="px-6 py-3 border-2 border-[var(--text-light)] rounded-full text-[var(--text-light)] font-semibold"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
             </div>
         </form>
