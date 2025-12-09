@@ -112,8 +112,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" className={`${fredoka.variable} ${jua.variable}`}>
-      <body className={`${fredoka.className} overflow-x-hidden`}>
+    <html lang="fr" className={`${fredoka.variable} ${jua.variable}`} style={{ overflowX: 'clip', width: '100vw', maxWidth: '100vw' }}>
+      <body className={`${fredoka.className} overflow-x-clip w-full max-w-full`} style={{ overflowX: 'clip', width: '100vw', maxWidth: '100vw' }}>
         {/* Skip to main content link for accessibility */}
         <a
           href="#main-content"

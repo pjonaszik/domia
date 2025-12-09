@@ -37,7 +37,7 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
         setLoading(true)
 
         try {
-            const url = client ? `/api/clients/${client.id}` : '/_/api/clients'
+                const url = client ? `/dashboard/api/clients/${client.id}` : '/dashboard/api/clients'
 
             const response = client 
                 ? await apiClient.put(url, formData)

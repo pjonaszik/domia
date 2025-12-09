@@ -34,7 +34,7 @@ export const users = pgTable('users', {
     // Settings
     timezone: varchar('timezone', { length: 50 }).default('Europe/Paris'),
     language: varchar('language', { length: 10 }).default('fr'),
-    
+
     // Timestamps
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -42,6 +42,8 @@ export const users = pgTable('users', {
 }, (table) => [
     index('user_email_idx').on(table.email),
     index('user_profession_idx').on(table.profession),
+    index('user_siret_idx').on(table.siret), // For SIRET lookups
+    index('user_created_at_idx').on(table.createdAt), // For user analytics
 ]);
 
 // Admins table - Separate table for administrators
@@ -65,7 +67,7 @@ export const admins = pgTable('admins', {
     
     // Admin metadata
     grantedAt: timestamp('granted_at').defaultNow().notNull(),
-    grantedBy: varchar('granted_by', { length: 128 }), // ID of admin who granted access
+    grantedBy: varchar('granted_by', { length: 128 }), // ID of admin who granted access (self-reference, handled at application level)
     isActive: boolean('is_active').default(true).notNull(),
     
     // Timestamps
@@ -76,12 +78,13 @@ export const admins = pgTable('admins', {
     index('admin_email_idx').on(table.email),
     index('admin_role_idx').on(table.role),
     index('admin_active_idx').on(table.isActive),
+    index('admin_role_active_idx').on(table.role, table.isActive), // Composite for filtered queries
 ]);
 
 // Clients table
 export const clients = pgTable('clients', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull(), // Professional who owns this client
+    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }), // Professional who owns this client
     
     // Contact information
     firstName: varchar('first_name', { length: 255 }).notNull(),
@@ -113,12 +116,15 @@ export const clients = pgTable('clients', {
     index('client_user_idx').on(table.userId),
     index('client_active_idx').on(table.isActive),
     index('client_city_idx').on(table.city),
+    index('client_user_active_idx').on(table.userId, table.isActive), // Composite for filtered client lists
+    index('client_postal_code_idx').on(table.postalCode), // For location-based queries
+    index('client_name_idx').on(table.firstName, table.lastName), // For name searches
 ]);
 
 // Services table - Types of services offered
 export const services = pgTable('services', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull(),
+    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
@@ -133,15 +139,17 @@ export const services = pgTable('services', {
 }, (table) => [
     index('service_user_idx').on(table.userId),
     index('service_active_idx').on(table.isActive),
+    index('service_user_active_idx').on(table.userId, table.isActive), // Composite for filtered service lists
+    index('service_category_idx').on(table.category), // For category filtering
 ]);
 
 // Appointments table - Rendez-vous/Visites
 export const appointments = pgTable('appointments', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull(),
-    clientId: varchar('client_id', { length: 128 }).notNull(),
-    serviceId: varchar('service_id', { length: 128 }), // Optional service reference
-    tourId: varchar('tour_id', { length: 128 }), // Optional tour reference
+    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    clientId: varchar('client_id', { length: 128 }).notNull().references(() => clients.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    serviceId: varchar('service_id', { length: 128 }).references(() => services.id, { onDelete: 'set null', onUpdate: 'cascade' }), // Optional service reference
+    tourId: varchar('tour_id', { length: 128 }).references(() => tours.id, { onDelete: 'set null', onUpdate: 'cascade' }), // Optional tour reference
     
     // Scheduling
     startTime: timestamp('start_time').notNull(),
@@ -169,12 +177,17 @@ export const appointments = pgTable('appointments', {
     index('appointment_tour_idx').on(table.tourId),
     index('appointment_start_time_idx').on(table.startTime),
     index('appointment_status_idx').on(table.status),
+    // Composite indexes for common query patterns
+    index('appointment_user_start_idx').on(table.userId, table.startTime), // For calendar views
+    index('appointment_user_status_idx').on(table.userId, table.status), // For filtered appointment lists
+    index('appointment_client_start_idx').on(table.clientId, table.startTime), // For client appointment history
+    index('appointment_date_range_idx').on(table.startTime, table.endTime), // For date range queries
 ]);
 
 // Tours table - Tournées (optimized routes)
 export const tours = pgTable('tours', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull(),
+    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     
     name: varchar('name', { length: 255 }), // e.g., "Tournée du matin - Lundi"
     date: timestamp('date').notNull(), // Date of the tour
@@ -197,13 +210,16 @@ export const tours = pgTable('tours', {
     index('tour_user_idx').on(table.userId),
     index('tour_date_idx').on(table.date),
     index('tour_status_idx').on(table.status),
+    // Composite indexes for common query patterns
+    index('tour_user_date_idx').on(table.userId, table.date), // For date-specific tour queries
+    index('tour_user_status_idx').on(table.userId, table.status), // For filtered tour lists
 ]);
 
 // Invoices table
 export const invoices = pgTable('invoices', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull(),
-    clientId: varchar('client_id', { length: 128 }).notNull(),
+    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    clientId: varchar('client_id', { length: 128 }).notNull().references(() => clients.id, { onDelete: 'restrict', onUpdate: 'cascade' }), // Restrict deletion if invoices exist
     
     invoiceNumber: varchar('invoice_number', { length: 50 }).notNull().unique(),
     
@@ -232,13 +248,17 @@ export const invoices = pgTable('invoices', {
     index('invoice_number_idx').on(table.invoiceNumber),
     index('invoice_status_idx').on(table.status),
     index('invoice_issue_date_idx').on(table.issueDate),
+    // Composite indexes for common query patterns
+    index('invoice_user_status_idx').on(table.userId, table.status), // For filtered invoice lists
+    index('invoice_user_date_idx').on(table.userId, table.issueDate), // For date range queries
+    index('invoice_client_status_idx').on(table.clientId, table.status), // For client invoice history
 ]);
 
 // Invoice items table
 export const invoiceItems = pgTable('invoice_items', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    invoiceId: varchar('invoice_id', { length: 128 }).notNull(),
-    appointmentId: varchar('appointment_id', { length: 128 }), // Optional reference to appointment
+    invoiceId: varchar('invoice_id', { length: 128 }).notNull().references(() => invoices.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    appointmentId: varchar('appointment_id', { length: 128 }).references(() => appointments.id, { onDelete: 'set null', onUpdate: 'cascade' }), // Optional reference to appointment
     
     description: text('description').notNull(),
     quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull().default('1.00'),
@@ -254,8 +274,8 @@ export const invoiceItems = pgTable('invoice_items', {
 // Documents table
 export const documents = pgTable('documents', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull(),
-    clientId: varchar('client_id', { length: 128 }), // Optional - can be general document
+    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    clientId: varchar('client_id', { length: 128 }).references(() => clients.id, { onDelete: 'cascade', onUpdate: 'cascade' }), // Optional - can be general document
     
     name: varchar('name', { length: 255 }).notNull(),
     type: varchar('type', { length: 100 }), // 'contract', 'note', 'certificate', 'prescription', etc.
@@ -271,12 +291,13 @@ export const documents = pgTable('documents', {
     index('document_user_idx').on(table.userId),
     index('document_client_idx').on(table.clientId),
     index('document_type_idx').on(table.type),
+    index('document_user_type_idx').on(table.userId, table.type), // Composite for filtered document lists
 ]);
 
 // Settings table - User preferences
 export const settings = pgTable('settings', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull().unique(),
+    userId: varchar('user_id', { length: 128 }).notNull().unique().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     
     // Notification preferences
     emailNotifications: boolean('email_notifications').default(true).notNull(),

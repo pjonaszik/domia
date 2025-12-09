@@ -66,6 +66,47 @@ export async function GET(req: NextRequest) {
             .filter(i => i.status === 'sent')
             .reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
 
+        // Today's appointments
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayAppointments = await db
+            .select()
+            .from(appointments)
+            .where(
+                and(
+                    eq(appointments.userId, userId),
+                    gte(appointments.startTime, today),
+                    lte(appointments.startTime, tomorrow)
+                )
+            );
+        
+        // Monthly revenue (current month)
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+        const monthEnd = new Date();
+        monthEnd.setMonth(monthEnd.getMonth() + 1);
+        monthEnd.setDate(0);
+        monthEnd.setHours(23, 59, 59, 999);
+        
+        const monthlyInvoices = await db
+            .select()
+            .from(invoices)
+            .where(
+                and(
+                    eq(invoices.userId, userId),
+                    gte(invoices.issueDate, monthStart),
+                    lte(invoices.issueDate, monthEnd)
+                )
+            );
+        
+        const monthlyRevenue = monthlyInvoices
+            .filter(i => i.status === 'paid')
+            .reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
+
         return NextResponse.json({
             stats: {
                 clients: {
@@ -76,10 +117,12 @@ export async function GET(req: NextRequest) {
                     completed: completedAppointments,
                     cancelled: cancelledAppointments,
                     completionRate: totalAppointments > 0 ? (completedAppointments / totalAppointments) * 100 : 0,
+                    today: todayAppointments.length,
                 },
                 revenue: {
                     total: totalRevenue,
                     pending: pendingRevenue,
+                    monthly: monthlyRevenue,
                     invoices: {
                         total: invoicesInRange.length,
                         paid: invoicesInRange.filter(i => i.status === 'paid').length,

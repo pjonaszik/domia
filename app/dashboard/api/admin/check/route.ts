@@ -1,12 +1,12 @@
-// /app/api/admin/check/route.ts
+// /app/dashboard/api/admin/check/route.ts
 // Check if current user is an admin
 
 import { NextRequest, NextResponse } from 'next/server'
-import { authenticateRequest } from '@/lib/utils/auth-middleware'
+import { authenticateAdminRequest } from '@/lib/utils/admin-auth-middleware'
 
 export async function GET(req: NextRequest) {
     try {
-        const auth = await authenticateRequest(req)
+        const auth = await authenticateAdminRequest(req)
 
         if (!auth.success) {
             return NextResponse.json(
@@ -15,10 +15,9 @@ export async function GET(req: NextRequest) {
             )
         }
 
-        const user = auth.user!
-
         return NextResponse.json({
-            isAdmin: user.isAdmin || false
+            isAdmin: true,
+            admin: auth.admin
         })
 
     } catch (error) {

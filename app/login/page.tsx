@@ -26,7 +26,7 @@ export default function LoginPage() {
 
         try {
             await login(email, password)
-            router.push('/')
+            router.push('/dashboard')
         } catch (err) {
             const errorMsg = err instanceof Error ? err.message : t('auth.loginError')
             setError(errorMsg)
@@ -37,7 +37,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-checkered flex items-center justify-center p-4">
+        <div className="min-h-screen bg-checkered flex items-center justify-center p-4 w-full max-w-full overflow-x-hidden">
             <div className="absolute top-4 right-4">
                 <LanguageSelector />
             </div>
@@ -63,7 +63,7 @@ export default function LoginPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            placeholder="votre@email.com"
+                            placeholder={t('auth.emailPlaceholder')}
                             aria-required="true"
                         />
                     </div>
@@ -80,7 +80,7 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            placeholder="••••••••"
+                            placeholder={t('auth.passwordPlaceholder')}
                             aria-required="true"
                         />
                     </div>

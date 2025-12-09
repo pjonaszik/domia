@@ -1,24 +1,14 @@
-// /app/api/admin/flagged-users/route.ts
-// Admin endpoint to view users flagged for review (high abuse scores)
+// /app/dashboard/api/admin/flagged-users/route.ts
+// Admin endpoint to view users flagged for review
 
 import { NextRequest, NextResponse } from 'next/server'
-// abuses table removed - not needed for Domia
-import { authenticateRequest } from '@/lib/utils/auth-middleware'
-// Abuse detection removed - not needed for Domia
-const ABUSE_THRESHOLDS = {
-    FLAG_FOR_REVIEW: 50,
-    TEMP_BAN_24H: 70,
-    TEMP_BAN_72H: 85,
-    PERMANENT_BAN: 100
-}
-// Audit logging removed - not needed for Domia
-const logAdminAction = async () => {}
+import { authenticateAdminRequest } from '@/lib/utils/admin-auth-middleware'
 import { rateLimiters, withRateLimit } from '@/lib/utils/rate-limit'
 
-// GET /api/admin/flagged-users - List users with high abuse scores
+// GET /dashboard/api/admin/flagged-users - List users flagged for review
 export async function GET(req: NextRequest) {
     try {
-        const auth = await authenticateRequest(req)
+        const auth = await authenticateAdminRequest(req)
 
         if (!auth.success) {
             return NextResponse.json(
@@ -27,19 +17,11 @@ export async function GET(req: NextRequest) {
             )
         }
 
-        const user = auth.user!
-
-        // Check if user is admin
-        if (!(user.isAdmin)) {
-            return NextResponse.json(
-                { error: 'Unauthorized - Admin only' },
-                { status: 403 }
-            )
-        }
+        const admin = auth.admin!
 
         // Rate limiting for admin endpoints
         const rateLimitResult = await withRateLimit(req, rateLimiters.admin, {
-            customIdentifier: `admin:${user.id}`
+            customIdentifier: `admin:${admin.id}`
         })
 
         if (rateLimitResult instanceof NextResponse) {
@@ -51,13 +33,9 @@ export async function GET(req: NextRequest) {
         // Abuse detection system removed for Domia
         const usersWithLogs: unknown[] = []
 
-        // Audit log
-        await logAdminAction()
-
         return NextResponse.json({
             success: true,
-            users: usersWithLogs,
-            thresholds: ABUSE_THRESHOLDS
+            users: usersWithLogs
         })
 
     } catch (error) {

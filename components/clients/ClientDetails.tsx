@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { formatAddress } from '@/lib/utils/address-helpers'
 import type { Client, Appointment, Invoice } from '@/lib/db/schema'
 import { formatDate, formatDateTime } from '@/lib/utils/date-helpers'
@@ -15,6 +16,7 @@ interface ClientDetailsProps {
 }
 
 export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsProps) {
+    const { t } = useLanguage()
     const [client, setClient] = useState<Client | null>(null)
     const [appointments, setAppointments] = useState<Appointment[]>([])
     const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -28,9 +30,9 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
         try {
             setLoading(true)
             const [clientRes, appointmentsRes, invoicesRes] = await Promise.all([
-                apiClient.get(`/api/clients/${clientId}`),
-                apiClient.get(`/api/appointments?clientId=${clientId}`),
-                apiClient.get(`/api/invoices?clientId=${clientId}`),
+                apiClient.get(`/dashboard/api/clients/${clientId}`),
+                apiClient.get(`/dashboard/api/appointments?clientId=${clientId}`),
+                apiClient.get(`/dashboard/api/invoices?clientId=${clientId}`),
             ])
 
             if (clientRes.ok) {
@@ -49,7 +51,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
             }
         } catch (error) {
             console.error('Error loading client data:', error)
-            onShowToast?.('Erreur lors du chargement')
+            onShowToast?.(t('clients.errorLoading'))
         } finally {
             setLoading(false)
         }
@@ -60,7 +62,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
             <div className="card-3d">
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-[var(--primary)] mx-auto mb-4"></div>
-                    <p className="text-secondary">Chargement...</p>
+                    <p className="text-secondary">{t('common.loading')}</p>
                 </div>
             </div>
         )
@@ -69,7 +71,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
     if (!client) {
         return (
             <div className="card-3d">
-                <p className="text-secondary">Client introuvable</p>
+                <p className="text-secondary">{t('clients.noClientsFound')}</p>
             </div>
         )
     }
@@ -93,12 +95,12 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-gray-100 text-gray-800'
                         }`}>
-                            {client.isActive ? 'Actif' : 'Inactif'}
+                            {client.isActive ? t('clients.active') : t('clients.inactive')}
                         </div>
                     </div>
                     {onEdit && (
                         <button onClick={onEdit} className="btn-primary">
-                            Modifier
+                            {t('common.edit')}
                         </button>
                     )}
                 </div>
@@ -108,7 +110,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
                         <div>
                             <p className="text-sm text-secondary mb-1">
                                 <i className="fas fa-map-marker-alt mr-2"></i>
-                                Adresse
+                                {t('clients.address')}
                             </p>
                             <p className="text-primary">{address}</p>
                         </div>
@@ -118,7 +120,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
                         <div>
                             <p className="text-sm text-secondary mb-1">
                                 <i className="fas fa-phone mr-2"></i>
-                                Téléphone
+                                {t('clients.phone')}
                             </p>
                             <p className="text-primary">{client.phone}</p>
                         </div>
@@ -128,7 +130,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
                         <div>
                             <p className="text-sm text-secondary mb-1">
                                 <i className="fas fa-envelope mr-2"></i>
-                                Email
+                                {t('clients.email')}
                             </p>
                             <p className="text-primary">{client.email}</p>
                         </div>
@@ -136,21 +138,21 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
 
                     {client.notes && (
                         <div>
-                            <p className="text-sm text-secondary mb-1">Notes</p>
+                            <p className="text-sm text-secondary mb-1">{t('clients.notes')}</p>
                             <p className="text-primary">{client.notes}</p>
                         </div>
                     )}
 
                     {client.medicalNotes && (
                         <div>
-                            <p className="text-sm text-secondary mb-1">Notes médicales</p>
+                            <p className="text-sm text-secondary mb-1">{t('clients.medicalNotes')}</p>
                             <p className="text-primary">{client.medicalNotes}</p>
                         </div>
                     )}
 
                     {client.allergies && (
                         <div>
-                            <p className="text-sm text-secondary mb-1">Allergies</p>
+                            <p className="text-sm text-secondary mb-1">{t('clients.allergies')}</p>
                             <p className="text-primary">{client.allergies}</p>
                         </div>
                     )}
@@ -159,7 +161,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
 
             {appointments.length > 0 && (
                 <div className="card-3d">
-                    <h3 className="text-lg font-bold text-primary mb-3">Derniers rendez-vous</h3>
+                    <h3 className="text-lg font-bold text-primary mb-3">{t('appointments.title')}</h3>
                     <div className="space-y-2">
                         {appointments.slice(0, 5).map((apt) => (
                             <div key={apt.id} className="border-l-4 border-[var(--primary)] pl-3 py-2">
@@ -167,7 +169,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
                                     {formatDateTime(apt.startTime)}
                                 </p>
                                 <p className="text-sm text-secondary">
-                                    {apt.serviceName || 'Rendez-vous'} - {apt.duration} min
+                                    {apt.serviceName || t('appointments.title')} - {apt.duration} {t('appointments.minutes')}
                                 </p>
                             </div>
                         ))}
@@ -177,7 +179,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
 
             {invoices.length > 0 && (
                 <div className="card-3d">
-                    <h3 className="text-lg font-bold text-primary mb-3">Factures récentes</h3>
+                    <h3 className="text-lg font-bold text-primary mb-3">{t('invoices.title')}</h3>
                     <div className="space-y-2">
                         {invoices.slice(0, 5).map((inv) => (
                             <div key={inv.id} className="flex items-center justify-between border-l-4 border-[var(--secondary)] pl-3 py-2">
@@ -192,9 +194,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
                                         inv.status === 'sent' ? 'text-orange-600' :
                                         'text-gray-600'
                                     }`}>
-                                        {inv.status === 'paid' ? 'Payée' :
-                                         inv.status === 'sent' ? 'Envoyée' :
-                                         inv.status === 'draft' ? 'Brouillon' : inv.status}
+                                        {t(`invoices.statusLabels.${inv.status}`) || inv.status}
                                     </p>
                                 </div>
                             </div>

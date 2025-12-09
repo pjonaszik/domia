@@ -2,6 +2,7 @@
 
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
 import type { Client } from '@/lib/db/schema'
 import { formatAddress } from '@/lib/utils/address-helpers'
 
@@ -11,6 +12,7 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ client, onClick }: ClientCardProps) {
+    const { t } = useLanguage()
     const fullName = `${client.firstName} ${client.lastName}`
     const address = formatAddress(
         client.address || '',
@@ -45,7 +47,7 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-800'
                 }`}>
-                    {client.isActive ? 'Actif' : 'Inactif'}
+                    {client.isActive ? t('clients.active') : t('clients.inactive')}
                 </div>
             </div>
         </div>

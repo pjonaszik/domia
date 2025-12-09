@@ -7,7 +7,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats'
+type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account'
 
 interface BottomNavProps {
     currentPage: Page
@@ -24,7 +24,7 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
             if (!userId) return
             
             try {
-                const response = await apiClient.get('/_/api/admin/check')
+                    const response = await apiClient.get('/dashboard/api/admin/check')
                 if (response.ok) {
                     const data = await response.json()
                     setIsAdmin(data.isAdmin || false)
@@ -48,12 +48,16 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 bg-white flex justify-around z-[100]"
+            className="fixed bottom-0 left-0 right-0 bg-white flex justify-around z-[100] w-full max-w-full"
             style={{
                 borderTop: '4px solid var(--text-primary)',
                 padding: '8px 0',
                 paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
-                boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.1)',
+                width: '100%',
+                maxWidth: '100vw',
+                left: 0,
+                right: 0
             }}
             aria-label={t('nav.mainNav')}
         >

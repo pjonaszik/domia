@@ -10,8 +10,8 @@ export function LandingPage() {
     const { t } = useLanguage()
     
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[var(--bg-secondary)] to-white">
-            <div className="absolute top-4 right-4 z-10">
+        <div className="min-h-screen bg-gradient-to-b from-[var(--bg-secondary)] to-white w-full max-w-full overflow-x-hidden">
+            <div className="absolute top-4 right-4 z-10 max-w-[calc(100vw-2rem)]">
                 <LanguageSelector />
             </div>
             <main id="main-content">
@@ -53,7 +53,7 @@ export function LandingPage() {
             {/* Features Section */}
             <section aria-labelledby="features-title" className="container mx-auto px-5 py-16">
                 <h2 id="features-title" className="text-3xl font-bold text-primary text-center mb-12">
-                    Tout ce dont vous avez besoin en un seul endroit
+                    {t('landing.featuresTitle')}
                 </h2>
                 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -62,9 +62,9 @@ export function LandingPage() {
                         <div className="w-16 h-16 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
                             <i className="fas fa-users text-3xl text-[var(--primary)]"></i>
                         </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">Gestion des clients</h3>
+                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature1Title')}</h3>
                         <p className="text-text-secondary">
-                            Gérez facilement vos clients, leurs informations, leurs préférences et leur historique.
+                            {t('landing.feature1Desc')}
                         </p>
                     </div>
 
@@ -73,9 +73,9 @@ export function LandingPage() {
                         <div className="w-16 h-16 rounded-lg bg-teal-100 flex items-center justify-center mb-4">
                             <i className="fas fa-calendar-alt text-3xl text-[var(--secondary)]"></i>
                         </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">Planning intelligent</h3>
+                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature2Title')}</h3>
                         <p className="text-text-secondary">
-                            Organisez vos rendez-vous avec un calendrier intuitif et des rappels automatiques.
+                            {t('landing.feature2Desc')}
                         </p>
                     </div>
 
@@ -84,9 +84,9 @@ export function LandingPage() {
                         <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
                             <i className="fas fa-route text-3xl text-purple-600"></i>
                         </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">Optimisation des tournées</h3>
+                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature3Title')}</h3>
                         <p className="text-text-secondary">
-                            Optimisez automatiquement vos déplacements pour gagner du temps et réduire les trajets.
+                            {t('landing.feature3Desc')}
                         </p>
                     </div>
 
@@ -95,9 +95,9 @@ export function LandingPage() {
                         <div className="w-16 h-16 rounded-lg bg-green-100 flex items-center justify-center mb-4">
                             <i className="fas fa-file-invoice text-3xl text-green-600"></i>
                         </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">Facturation simplifiée</h3>
+                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature4Title')}</h3>
                         <p className="text-text-secondary">
-                            Créez et gérez vos factures en quelques clics. Export PDF disponible.
+                            {t('landing.feature4Desc')}
                         </p>
                     </div>
 
@@ -106,9 +106,9 @@ export function LandingPage() {
                         <div className="w-16 h-16 rounded-lg bg-orange-100 flex items-center justify-center mb-4">
                             <i className="fas fa-chart-line text-3xl text-orange-600"></i>
                         </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">Statistiques détaillées</h3>
+                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature5Title')}</h3>
                         <p className="text-text-secondary">
-                            Suivez vos performances, vos revenus et votre activité avec des tableaux de bord clairs.
+                            {t('landing.feature5Desc')}
                         </p>
                     </div>
 
@@ -117,9 +117,9 @@ export function LandingPage() {
                         <div className="w-16 h-16 rounded-lg bg-pink-100 flex items-center justify-center mb-4">
                             <i className="fas fa-mobile-alt text-3xl text-pink-600"></i>
                         </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">Accessible partout</h3>
+                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature6Title')}</h3>
                         <p className="text-text-secondary">
-                            Accédez à vos données depuis n'importe quel appareil, à tout moment.
+                            {t('landing.feature6Desc')}
                         </p>
                     </div>
                 </div>
@@ -129,16 +129,16 @@ export function LandingPage() {
             <section aria-labelledby="who-title" className="bg-[var(--bg-secondary)] py-16">
                 <div className="container mx-auto px-5">
                     <h2 id="who-title" className="text-3xl font-bold text-primary text-center mb-12">
-                        Pour qui ?
+                        {t('landing.whoTitle')}
                     </h2>
                     
                     <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-5xl mx-auto">
                         {[
-                            { icon: 'fa-user-nurse', title: 'Infirmières libérales', bgClass: 'bg-blue-100', iconClass: 'text-blue-600' },
-                            { icon: 'fa-hands-helping', title: 'Aides-soignantes indépendantes', bgClass: 'bg-teal-100', iconClass: 'text-teal-600' },
-                            { icon: 'fa-broom', title: 'Agents d\'entretien', bgClass: 'bg-green-100', iconClass: 'text-green-600' },
-                            { icon: 'fa-home', title: 'Aide à domicile', bgClass: 'bg-orange-100', iconClass: 'text-orange-600' },
-                            { icon: 'fa-baby', title: 'Garde d\'enfants', bgClass: 'bg-pink-100', iconClass: 'text-pink-600' },
+                            { icon: 'fa-user-nurse', titleKey: 'profession1', bgClass: 'bg-blue-100', iconClass: 'text-blue-600' },
+                            { icon: 'fa-hands-helping', titleKey: 'profession2', bgClass: 'bg-teal-100', iconClass: 'text-teal-600' },
+                            { icon: 'fa-broom', titleKey: 'profession3', bgClass: 'bg-green-100', iconClass: 'text-green-600' },
+                            { icon: 'fa-home', titleKey: 'profession4', bgClass: 'bg-orange-100', iconClass: 'text-orange-600' },
+                            { icon: 'fa-baby', titleKey: 'profession5', bgClass: 'bg-pink-100', iconClass: 'text-pink-600' },
                         ].map((profession, index) => (
                             <div 
                                 key={index}
@@ -147,7 +147,7 @@ export function LandingPage() {
                                 <div className={`w-16 h-16 rounded-full ${profession.bgClass} flex items-center justify-center mx-auto mb-4`}>
                                     <i className={`fas ${profession.icon} text-2xl ${profession.iconClass}`}></i>
                                 </div>
-                                <h3 className="font-semibold text-primary">{profession.title}</h3>
+                                <h3 className="font-semibold text-primary">{t(`landing.${profession.titleKey}`)}</h3>
                             </div>
                         ))}
                     </div>
@@ -157,7 +157,7 @@ export function LandingPage() {
             {/* Benefits Section */}
             <section aria-labelledby="benefits-title" className="container mx-auto px-5 py-16">
                 <h2 id="benefits-title" className="text-3xl font-bold text-primary text-center mb-12">
-                    Pourquoi choisir Domia ?
+                    {t('landing.benefitsTitle')}
                 </h2>
                 
                 <div className="max-w-4xl mx-auto space-y-8">
@@ -166,9 +166,9 @@ export function LandingPage() {
                             <i className="fas fa-clock text-xl"></i>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-primary mb-2">Gagnez du temps</h3>
+                            <h3 className="text-xl font-bold text-primary mb-2">{t('landing.benefit1Title')}</h3>
                             <p className="text-text-secondary">
-                                Automatisez vos tâches administratives et concentrez-vous sur l'essentiel : vos clients.
+                                {t('landing.benefit1Desc')}
                             </p>
                         </div>
                     </div>
@@ -178,9 +178,9 @@ export function LandingPage() {
                             <i className="fas fa-euro-sign text-xl"></i>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-primary mb-2">Optimisez vos revenus</h3>
+                            <h3 className="text-xl font-bold text-primary mb-2">{t('landing.benefit2Title')}</h3>
                             <p className="text-text-secondary">
-                                Réduisez vos déplacements et maximisez votre productivité grâce à l'optimisation des tournées.
+                                {t('landing.benefit2Desc')}
                             </p>
                         </div>
                     </div>
@@ -190,9 +190,9 @@ export function LandingPage() {
                             <i className="fas fa-shield-alt text-xl"></i>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-primary mb-2">Sécurisé et fiable</h3>
+                            <h3 className="text-xl font-bold text-primary mb-2">{t('landing.benefit3Title')}</h3>
                             <p className="text-text-secondary">
-                                Vos données sont protégées et sauvegardées en toute sécurité. Conforme RGPD.
+                                {t('landing.benefit3Desc')}
                             </p>
                         </div>
                     </div>
@@ -202,9 +202,9 @@ export function LandingPage() {
                             <i className="fas fa-heart text-xl"></i>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-primary mb-2">Conçu pour vous</h3>
+                            <h3 className="text-xl font-bold text-primary mb-2">{t('landing.benefit4Title')}</h3>
                             <p className="text-text-secondary">
-                                Développé spécifiquement pour les professionnels du service à la personne en France.
+                                {t('landing.benefit4Desc')}
                             </p>
                         </div>
                     </div>
@@ -215,18 +215,18 @@ export function LandingPage() {
             <section aria-labelledby="cta-title" className="bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] py-16 text-white">
                 <div className="container mx-auto px-5 text-center">
                     <h2 id="cta-title" className="text-3xl md:text-4xl font-bold mb-6">
-                        Prêt à simplifier votre quotidien ?
+                        {t('landing.ctaTitle')}
                     </h2>
                     <p className="text-xl mb-8 opacity-90">
-                        Rejoignez les professionnels qui font confiance à Domia
+                        {t('landing.ctaDesc')}
                     </p>
                     <a 
                         href="/register" 
                         className="inline-block bg-white text-[var(--primary)] px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-                        aria-label="Créer mon compte gratuitement sur Domia"
+                        aria-label={t('landing.ctaButtonAria')}
                     >
                         <i className="fas fa-rocket mr-2" aria-hidden="true"></i>
-                        Créer mon compte gratuitement
+                        {t('landing.ctaButton')}
                     </a>
                 </div>
             </section>
@@ -238,19 +238,19 @@ export function LandingPage() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div>
                             <h3 className="text-xl font-bold mb-2">Domia</h3>
-                            <p className="text-sm opacity-75">Vos tournées optimisées, vos journées simplifiées</p>
+                            <p className="text-sm opacity-75">{t('landing.footerTagline')}</p>
                         </div>
                         <div className="flex gap-6">
                             <a href="/terms" className="text-sm hover:underline opacity-75 hover:opacity-100">
-                                Conditions d'utilisation
+                                {t('landing.footerTerms')}
                             </a>
                             <a href="/privacy" className="text-sm hover:underline opacity-75 hover:opacity-100">
-                                Politique de confidentialité
+                                {t('landing.footerPrivacy')}
                             </a>
                         </div>
                     </div>
                     <div className="border-t border-white/20 mt-6 pt-6 text-center text-sm opacity-75">
-                        <p>&copy; {new Date().getFullYear()} Domia. Tous droits réservés.</p>
+                        <p>&copy; {new Date().getFullYear()} Domia. {t('landing.footerRights')}.</p>
                     </div>
                 </div>
             </footer>

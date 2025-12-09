@@ -27,11 +27,11 @@ export default function RegisterPage() {
     const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
 
     const professions = [
-        { value: 'infirmiere', label: 'Infirmière libérale' },
-        { value: 'aide_soignante', label: 'Aide-soignante indépendante' },
-        { value: 'agent_entretien', label: 'Agent d\'entretien' },
-        { value: 'aide_domicile', label: 'Aide à domicile' },
-        { value: 'garde_enfants', label: 'Garde d\'enfants' },
+        { value: 'infirmiere', translationKey: 'professionInfirmiere' },
+        { value: 'aide_soignante', translationKey: 'professionAideSoignante' },
+        { value: 'agent_entretien', translationKey: 'professionAgentEntretien' },
+        { value: 'aide_domicile', translationKey: 'professionAideDomicile' },
+        { value: 'garde_enfants', translationKey: 'professionGardeEnfants' },
     ]
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +75,7 @@ export default function RegisterPage() {
                 formData.profession || undefined,
                 siretCleaned
             )
-            router.push('/')
+            router.push('/dashboard')
         } catch (err) {
             const errorMsg = err instanceof Error ? err.message : t('auth.registerError')
             setError(errorMsg)
@@ -86,7 +86,7 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-checkered flex items-center justify-center p-4">
+        <div className="min-h-screen bg-checkered flex items-center justify-center p-4 w-full max-w-full overflow-x-hidden">
             <div className="absolute top-4 right-4">
                 <LanguageSelector />
             </div>
@@ -155,12 +155,12 @@ export default function RegisterPage() {
                             value={formData.profession}
                             onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            aria-label="Sélectionner votre profession"
+                            aria-label={t('auth.selectProfessionAria')}
                         >
-                            <option value="">Sélectionner une profession</option>
+                            <option value="">{t('auth.selectProfession')}</option>
                             {professions.map((prof) => (
                                 <option key={prof.value} value={prof.value}>
-                                    {prof.label}
+                                    {t(`auth.${prof.translationKey}`)}
                                 </option>
                             ))}
                         </select>
@@ -192,7 +192,7 @@ export default function RegisterPage() {
                                 setFormData({ ...formData, siret: formatted })
                             }}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            placeholder="123 456 789 01234"
+                            placeholder={t('auth.siretPlaceholder')}
                             aria-required="true"
                             aria-describedby="siret-help"
                         />
@@ -215,7 +215,7 @@ export default function RegisterPage() {
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            placeholder="Au moins 8 caractères"
+                            placeholder={t('auth.passwordMinPlaceholder')}
                             aria-required="true"
                             aria-describedby="password-help"
                         />
@@ -234,7 +234,7 @@ export default function RegisterPage() {
                             value={formData.confirmPassword}
                             onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            placeholder="••••••••"
+                            placeholder={t('auth.passwordPlaceholder')}
                             aria-required="true"
                         />
                     </div>

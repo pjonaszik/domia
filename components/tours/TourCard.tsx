@@ -2,6 +2,7 @@
 
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
 import type { Tour } from '@/lib/db/schema'
 import { formatDate } from '@/lib/utils/date-helpers'
 
@@ -11,18 +12,12 @@ interface TourCardProps {
 }
 
 export function TourCard({ tour, onClick }: TourCardProps) {
+    const { t } = useLanguage()
     const statusColors: Record<string, string> = {
         draft: 'bg-gray-100 text-gray-800',
         scheduled: 'bg-blue-100 text-blue-800',
         in_progress: 'bg-yellow-100 text-yellow-800',
         completed: 'bg-green-100 text-green-800',
-    }
-
-    const statusLabels: Record<string, string> = {
-        draft: 'Brouillon',
-        scheduled: 'Planifiée',
-        in_progress: 'En cours',
-        completed: 'Terminée',
     }
 
     return (
@@ -48,14 +43,14 @@ export function TourCard({ tour, onClick }: TourCardProps) {
                     {tour.estimatedDuration && (
                         <p className="text-sm text-secondary">
                             <i className="fas fa-clock mr-2"></i>
-                            {tour.estimatedDuration} min
+                            {tour.estimatedDuration} {t('appointments.minutes')}
                         </p>
                     )}
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
                     statusColors[tour.status] || 'bg-gray-100 text-gray-800'
                 }`}>
-                    {statusLabels[tour.status] || tour.status}
+                    {t(`tours.status.${tour.status}`) || tour.status}
                 </div>
             </div>
         </div>

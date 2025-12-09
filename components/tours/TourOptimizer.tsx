@@ -4,6 +4,7 @@
 
 import { useState } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 import type { Appointment } from '@/lib/db/schema'
 
 interface TourOptimizerProps {
@@ -13,6 +14,7 @@ interface TourOptimizerProps {
 }
 
 export function TourOptimizer({ appointments, onOptimized, onShowToast }: TourOptimizerProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [optimizedRoute, setOptimizedRoute] = useState<{
         optimizedOrder: string[]
@@ -22,7 +24,7 @@ export function TourOptimizer({ appointments, onOptimized, onShowToast }: TourOp
 
     const handleOptimize = async () => {
         if (appointments.length < 2) {
-            onShowToast?.('Au moins 2 rendez-vous sont nécessaires pour optimiser')
+            onShowToast?.(t('tours.minAppointments'))
             return
         }
 
@@ -30,22 +32,22 @@ export function TourOptimizer({ appointments, onOptimized, onShowToast }: TourOp
             setLoading(true)
             const appointmentIds = appointments.map(apt => apt.id)
 
-            const response = await apiClient.post('/_/api/tours/optimize', {
+            const response = await apiClient.post('/dashboard/api/tours/optimize', {
                 appointmentIds,
             })
 
             if (!response.ok) {
                 const data = await response.json()
-                throw new Error(data.error || 'Erreur lors de l\'optimisation')
+                throw new Error(data.error || t('tours.errorOptimizing'))
             }
 
             const data = await response.json()
             setOptimizedRoute(data.optimizedRoute)
             onOptimized(data.optimizedRoute.optimizedOrder)
-            onShowToast?.('Tournée optimisée avec succès')
+            onShowToast?.(t('tours.optimizedSuccess'))
         } catch (error) {
             console.error('Error optimizing tour:', error)
-            onShowToast?.(error instanceof Error ? error.message : 'Erreur lors de l\'optimisation')
+            onShowToast?.(error instanceof Error ? error.message : t('tours.errorOptimizing'))
         } finally {
             setLoading(false)
         }
@@ -53,29 +55,31 @@ export function TourOptimizer({ appointments, onOptimized, onShowToast }: TourOp
 
     return (
         <div className="card-3d">
-            <h3 className="text-lg font-bold text-primary mb-4">Optimisation de tournée</h3>
+            <h3 className="text-lg font-bold text-primary mb-4">{t('tours.optimization')}</h3>
             <p className="text-secondary text-sm mb-4">
-                {appointments.length} rendez-vous sélectionné{appointments.length > 1 ? 's' : ''}
+                {appointments.length === 1 
+                    ? t('tours.selectedAppointments', { count: '1' })
+                    : t('tours.selectedAppointmentsPlural', { count: String(appointments.length) })}
             </p>
             <button
                 onClick={handleOptimize}
                 disabled={loading || appointments.length < 2}
                 className="btn-primary w-full"
             >
-                {loading ? 'Optimisation...' : 'Optimiser la tournée'}
+                {loading ? t('tours.optimizing') : t('tours.optimizeTour')}
             </button>
             {optimizedRoute && (
                 <div className="mt-4 p-4 bg-[var(--bg-card)] rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-secondary">Distance totale:</span>
+                        <span className="text-sm text-secondary">{t('tours.totalDistance')}:</span>
                         <span className="font-semibold text-primary">
                             {optimizedRoute.totalDistance.toFixed(1)} km
                         </span>
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-secondary">Durée estimée:</span>
+                        <span className="text-sm text-secondary">{t('tours.estimatedDuration')}:</span>
                         <span className="font-semibold text-primary">
-                            {optimizedRoute.estimatedDuration} min
+                            {optimizedRoute.estimatedDuration} {t('appointments.minutes')}
                         </span>
                     </div>
                 </div>

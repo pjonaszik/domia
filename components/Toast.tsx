@@ -24,9 +24,25 @@ export function Toast({ message, show, onHide }: ToastProps) {
     if (!show) return null
 
     return (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce w-[90vw] max-w-md">
-            <div className="bg-gray-800 text-white px-10 py-4 rounded-full shadow-lg border-4 border-gray-700 text-center"
-                style={{ boxShadow: '0 6px 0 #374151, 0 12px 20px rgba(0, 0, 0, 0.3)' }}>
+        <div 
+            className="fixed z-[9999] pointer-events-none"
+            style={{
+                top: 'calc(90px + env(safe-area-inset-top))',
+                left: '1rem',
+                right: '1rem',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+            }}
+        >
+            <div 
+                className="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg border-2 border-gray-700 text-center animate-slide-down pointer-events-auto"
+                style={{ 
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+                    maxWidth: '28rem',
+                    width: '100%',
+                }}
+            >
                 {message}
             </div>
         </div>

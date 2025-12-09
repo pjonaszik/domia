@@ -62,7 +62,7 @@ const nextConfig: NextConfig = {
             },
             // Block robots from dashboard routes
             {
-                source: '/_/:path*',
+                source: '/dashboard/:path*',
                 headers: [
                     {
                         key: 'X-Robots-Tag',

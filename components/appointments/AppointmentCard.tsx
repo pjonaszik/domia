@@ -2,6 +2,7 @@
 
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
 import type { Appointment } from '@/lib/db/schema'
 import { formatDateTime } from '@/lib/utils/date-helpers'
 
@@ -11,18 +12,12 @@ interface AppointmentCardProps {
 }
 
 export function AppointmentCard({ appointment, onClick }: AppointmentCardProps) {
+    const { t } = useLanguage()
     const statusColors: Record<string, string> = {
         scheduled: 'bg-blue-100 text-blue-800',
         completed: 'bg-green-100 text-green-800',
         cancelled: 'bg-red-100 text-red-800',
         no_show: 'bg-gray-100 text-gray-800',
-    }
-
-    const statusLabels: Record<string, string> = {
-        scheduled: 'Planifié',
-        completed: 'Terminé',
-        cancelled: 'Annulé',
-        no_show: 'Absent',
     }
 
     return (
@@ -47,7 +42,7 @@ export function AppointmentCard({ appointment, onClick }: AppointmentCardProps) 
                     <div className="flex items-center gap-4 text-sm text-secondary">
                         <span>
                             <i className="fas fa-clock mr-1"></i>
-                            {appointment.duration} min
+                            {appointment.duration} {t('appointments.minutes')}
                         </span>
                         {appointment.price && (
                             <span>
@@ -63,7 +58,7 @@ export function AppointmentCard({ appointment, onClick }: AppointmentCardProps) 
                 <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
                     statusColors[appointment.status] || 'bg-gray-100 text-gray-800'
                 }`}>
-                    {statusLabels[appointment.status] || appointment.status}
+                    {t(`appointments.statusLabels.${appointment.status}`) || appointment.status}
                 </div>
             </div>
         </div>

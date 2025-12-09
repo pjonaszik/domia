@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
+import { useLanguage } from '@/contexts/LanguageContext'
 import type { Invoice, Client, Appointment } from '@/lib/db/schema'
 
 interface InvoiceFormProps {
@@ -23,6 +24,7 @@ interface InvoiceItem {
 }
 
 export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }: InvoiceFormProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<Client[]>([])
     const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -53,7 +55,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
 
     const loadClients = async () => {
         try {
-            const response = await apiClient.get('/_/api/clients')
+            const response = await apiClient.get('/dashboard/api/clients')
             if (response.ok) {
                 const data = await response.json()
                 setClients(data.clients || [])
@@ -65,7 +67,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
 
     const loadClientAppointments = async () => {
         try {
-            const response = await apiClient.get(`/api/appointments?clientId=${formData.clientId}`)
+            const response = await apiClient.get(`/dashboard/api/appointments?clientId=${formData.clientId}`)
             if (response.ok) {
                 const data = await response.json()
                 setAppointments(data.appointments || [])
@@ -78,7 +80,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
     const loadInvoiceItems = async () => {
         if (!invoice) return
         try {
-            const response = await apiClient.get(`/api/invoices/${invoice.id}`)
+            const response = await apiClient.get(`/dashboard/api/invoices/${invoice.id}`)
             if (response.ok) {
                 const data = await response.json()
                 if (data.items) {
@@ -115,7 +117,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
 
     const addAppointmentAsItem = (appointment: Appointment) => {
         setItems([...items, {
-            description: appointment.serviceName || 'Rendez-vous',
+            description: appointment.serviceName || t('appointments.title'),
             quantity: 1,
             unitPrice: appointment.price ? parseFloat(appointment.price) : 0,
             total: appointment.price ? parseFloat(appointment.price) : 0,
@@ -154,7 +156,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                 })),
             }
 
-            const url = invoice ? `/api/invoices/${invoice.id}` : '/_/api/invoices'
+            const url = invoice ? `/dashboard/api/invoices/${invoice.id}` : '/dashboard/api/invoices'
 
             const response = invoice 
                 ? await apiClient.put(url, payload)
@@ -162,14 +164,14 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
 
             if (!response.ok) {
                 const data = await response.json()
-                throw new Error(data.error || 'Erreur lors de la sauvegarde')
+                throw new Error(data.error || t('invoices.errorSaving'))
             }
 
-            onShowToast?.(invoice ? 'Facture mise à jour' : 'Facture créée')
+            onShowToast?.(invoice ? t('invoices.invoiceUpdated') : t('invoices.invoiceCreated'))
             onSave()
         } catch (error) {
             console.error('Error saving invoice:', error)
-            onShowToast?.(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde')
+            onShowToast?.(error instanceof Error ? error.message : t('invoices.errorSaving'))
         } finally {
             setLoading(false)
         }
@@ -180,12 +182,12 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
     return (
         <form onSubmit={handleSubmit} className="card-3d space-y-4">
             <h2 className="text-xl font-bold text-primary mb-4">
-                {invoice ? 'Modifier la facture' : 'Nouvelle facture'}
+                {invoice ? t('invoices.editInvoice') : t('invoices.newInvoice')}
             </h2>
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Client *
+                    {t('invoices.client')} *
                 </label>
                 <select
                     required
@@ -194,7 +196,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                     disabled={!!clientId}
                     className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 >
-                    <option value="">Sélectionner un client</option>
+                    <option value="">{t('invoices.selectClient')}</option>
                     {clients.map((client) => (
                         <option key={client.id} value={client.id}>
                             {client.firstName} {client.lastName}
@@ -206,7 +208,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-semibold text-primary mb-1">
-                        Date d'émission *
+                        {t('invoices.issueDate')} *
                     </label>
                     <input
                         type="date"
@@ -218,7 +220,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                 </div>
                 <div>
                     <label className="block text-sm font-semibold text-primary mb-1">
-                        Date d'échéance
+                        {t('invoices.dueDate')}
                     </label>
                     <input
                         type="date"
@@ -232,7 +234,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
             {formData.clientId && appointments.length > 0 && (
                 <div>
                     <label className="block text-sm font-semibold text-primary mb-2">
-                        Ajouter un rendez-vous
+                        {t('invoices.addFromAppointment')}
                     </label>
                     <div className="space-y-2 max-h-32 overflow-y-auto">
                         {appointments.map((apt) => (
@@ -242,7 +244,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                                 onClick={() => addAppointmentAsItem(apt)}
                                 className="w-full text-left px-3 py-2 border border-[var(--primary)] rounded-lg hover:bg-[var(--bg-card)] text-sm"
                             >
-                                {new Date(apt.startTime).toLocaleDateString('fr-FR')} - {apt.serviceName || 'Rendez-vous'} - {apt.price ? `${parseFloat(apt.price).toFixed(2)} €` : ''}
+                                {new Date(apt.startTime).toLocaleDateString('fr-FR')} - {apt.serviceName || t('appointments.title')} - {apt.price ? `${parseFloat(apt.price).toFixed(2)} €` : ''}
                             </button>
                         ))}
                     </div>
@@ -252,14 +254,14 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-semibold text-primary">
-                        Lignes de facture *
+                        {t('invoices.invoiceLines')} *
                     </label>
                     <button
                         type="button"
                         onClick={addItem}
                         className="text-sm btn-primary px-3 py-1"
                     >
-                        + Ajouter
+                        + {t('invoices.addItem')}
                     </button>
                 </div>
                 <div className="space-y-2">
@@ -268,14 +270,14 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                             <div className="grid grid-cols-2 gap-2 mb-2">
                                 <input
                                     type="text"
-                                    placeholder="Description"
+                                    placeholder={t('invoices.description')}
                                     value={item.description}
                                     onChange={(e) => updateItem(index, 'description', e.target.value)}
                                     className="col-span-2 px-3 py-2 border border-[var(--text-light)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                                 />
                                 <input
                                     type="number"
-                                    placeholder="Quantité"
+                                    placeholder={t('invoices.quantity')}
                                     min="0"
                                     step="0.01"
                                     value={item.quantity}
@@ -284,7 +286,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                                 />
                                 <input
                                     type="number"
-                                    placeholder="Prix unitaire"
+                                    placeholder={t('invoices.unitPrice')}
                                     min="0"
                                     step="0.01"
                                     value={item.unitPrice}
@@ -294,14 +296,14 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="font-semibold text-primary">
-                                    Total: {item.total.toFixed(2)} €
+                                    {t('invoices.total')}: {item.total.toFixed(2)} €
                                 </span>
                                 <button
                                     type="button"
                                     onClick={() => removeItem(index)}
                                     className="text-red-600 text-sm"
                                 >
-                                    Supprimer
+                                    {t('invoices.removeItem')}
                                 </button>
                             </div>
                         </div>
@@ -311,22 +313,22 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
 
             <div className="border-t-2 border-[var(--primary)] pt-4 space-y-2">
                 <div className="flex justify-between">
-                    <span className="text-secondary">Sous-total:</span>
+                    <span className="text-secondary">{t('invoices.subtotal')}:</span>
                     <span className="font-semibold">{subtotal.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between">
-                    <span className="text-secondary">TVA:</span>
+                    <span className="text-secondary">{t('invoices.tax')}:</span>
                     <span className="font-semibold">{tax.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-primary">
-                    <span>Total:</span>
+                    <span>{t('invoices.total')}:</span>
                     <span>{total.toFixed(2)} €</span>
                 </div>
             </div>
 
             <div>
                 <label className="block text-sm font-semibold text-primary mb-1">
-                    Notes
+                    {t('invoices.notes')}
                 </label>
                 <textarea
                     value={formData.notes}
@@ -342,14 +344,14 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                     disabled={loading || items.length === 0}
                     className="btn-primary flex-1"
                 >
-                    {loading ? 'Enregistrement...' : 'Enregistrer'}
+                    {loading ? t('common.loading') : t('common.save')}
                 </button>
                 <button
                     type="button"
                     onClick={onCancel}
                     className="px-6 py-3 border-2 border-[var(--text-light)] rounded-full text-[var(--text-light)] font-semibold"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
             </div>
         </form>

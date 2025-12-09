@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { ClientCard } from './ClientCard'
+import { ClientForm } from './ClientForm'
 import type { Client } from '@/lib/db/schema'
 
 interface ClientListProps {
@@ -18,6 +19,7 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
     const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
+    const [showCreateForm, setShowCreateForm] = useState(false)
 
     useEffect(() => {
         loadClients()
@@ -26,7 +28,7 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
     const loadClients = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get('/_/api/clients')
+            const response = await apiClient.get('/dashboard/api/clients')
             if (!response.ok) throw new Error('Failed to load clients')
             const data = await response.json()
             setClients(data.clients || [])
@@ -36,6 +38,12 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleClientSaved = () => {
+        setShowCreateForm(false)
+        loadClients()
+        onShowToast?.(t('clients.clientCreated'))
     }
 
     const filteredClients = clients.filter(client => {
@@ -60,6 +68,18 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
         )
     }
 
+    if (showCreateForm) {
+        return (
+            <div className="space-y-4">
+                <ClientForm
+                    onSave={handleClientSaved}
+                    onCancel={() => setShowCreateForm(false)}
+                    onShowToast={onShowToast}
+                />
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-4">
             <div className="card-3d">
@@ -71,7 +91,22 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex-1 px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                     />
+                    <button
+                        type="button"
+                        className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center justify-center"
+                        aria-label={t('common.search')}
+                    >
+                        <i className="fas fa-search" aria-hidden="true"></i>
+                    </button>
                 </div>
+                <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="w-full px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 mb-4"
+                    aria-label={t('clients.createClient')}
+                >
+                    <i className="fas fa-plus" aria-hidden="true"></i>
+                    <span>{t('clients.newClient')}</span>
+                </button>
                 <div className="text-sm text-secondary mb-2">
                     {filteredClients.length === 1 
                         ? t('clients.clientCount', { count: '1' })
