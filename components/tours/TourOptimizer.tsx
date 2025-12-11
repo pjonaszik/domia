@@ -10,10 +10,10 @@ import type { Appointment } from '@/lib/db/schema'
 interface TourOptimizerProps {
     appointments: Appointment[]
     onOptimized: (optimizedOrder: string[]) => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function TourOptimizer({ appointments, onOptimized, onShowToast }: TourOptimizerProps) {
+export function TourOptimizer({ appointments, onOptimized, onShowAlert }: TourOptimizerProps) {
     const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [optimizedRoute, setOptimizedRoute] = useState<{
@@ -24,7 +24,7 @@ export function TourOptimizer({ appointments, onOptimized, onShowToast }: TourOp
 
     const handleOptimize = async () => {
         if (appointments.length < 2) {
-            onShowToast?.(t('tours.minAppointments'))
+            onShowAlert?.(t('tours.minAppointments'))
             return
         }
 
@@ -44,10 +44,10 @@ export function TourOptimizer({ appointments, onOptimized, onShowToast }: TourOp
             const data = await response.json()
             setOptimizedRoute(data.optimizedRoute)
             onOptimized(data.optimizedRoute.optimizedOrder)
-            onShowToast?.(t('tours.optimizedSuccess'))
+            onShowAlert?.(t('tours.optimizedSuccess'))
         } catch (error) {
             console.error('Error optimizing tour:', error)
-            onShowToast?.(error instanceof Error ? error.message : t('tours.errorOptimizing'))
+            onShowAlert?.(error instanceof Error ? error.message : t('tours.errorOptimizing'))
         } finally {
             setLoading(false)
         }

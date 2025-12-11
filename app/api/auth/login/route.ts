@@ -27,20 +27,28 @@ export async function POST(req: NextRequest) {
             .limit(1);
 
         if (!user) {
+            console.error(`[LOGIN] User not found for email: ${email}`);
             return NextResponse.json(
                 { error: 'Invalid email or password' },
                 { status: 401 }
             );
         }
 
+        console.log(`[LOGIN] User found: ${user.email}, checking password...`);
+
         // Verify password
         const isValidPassword = await verifyPassword(password, user.passwordHash);
+        console.log(`[LOGIN] Password verification result: ${isValidPassword}`);
+        
         if (!isValidPassword) {
+            console.error(`[LOGIN] Invalid password for email: ${email}`);
             return NextResponse.json(
                 { error: 'Invalid email or password' },
                 { status: 401 }
             );
         }
+
+        console.log(`[LOGIN] Successful login for: ${email}`);
 
         // Update last login
         await db

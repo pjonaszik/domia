@@ -12,10 +12,10 @@ import { formatDate, formatDateTime } from '@/lib/utils/date-helpers'
 interface ClientDetailsProps {
     clientId: string
     onEdit?: () => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsProps) {
+export function ClientDetails({ clientId, onEdit, onShowAlert }: ClientDetailsProps) {
     const { t } = useLanguage()
     const [client, setClient] = useState<Client | null>(null)
     const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -51,7 +51,7 @@ export function ClientDetails({ clientId, onEdit, onShowToast }: ClientDetailsPr
             }
         } catch (error) {
             console.error('Error loading client data:', error)
-            onShowToast?.(t('clients.errorLoading'))
+            onShowAlert?.(t('clients.errorLoading'))
         } finally {
             setLoading(false)
         }

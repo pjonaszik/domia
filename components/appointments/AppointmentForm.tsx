@@ -12,10 +12,10 @@ interface AppointmentFormProps {
     clientId?: string
     onSave: () => void
     onCancel: () => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function AppointmentForm({ appointment, clientId, onSave, onCancel, onShowToast }: AppointmentFormProps) {
+export function AppointmentForm({ appointment, clientId, onSave, onCancel, onShowAlert }: AppointmentFormProps) {
     const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<Client[]>([])
@@ -75,11 +75,11 @@ export function AppointmentForm({ appointment, clientId, onSave, onCancel, onSho
                 throw new Error(data.error || t('appointments.errorSaving'))
             }
 
-            onShowToast?.(appointment ? t('appointments.appointmentUpdated') : t('appointments.appointmentCreated'))
+            onShowAlert?.(appointment ? t('appointments.appointmentUpdated') : t('appointments.appointmentCreated'))
             onSave()
         } catch (error) {
             console.error('Error saving appointment:', error)
-            onShowToast?.(error instanceof Error ? error.message : t('appointments.errorSaving'))
+            onShowAlert?.(error instanceof Error ? error.message : t('appointments.errorSaving'))
         } finally {
             setLoading(false)
         }

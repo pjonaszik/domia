@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSelector } from '@/components/LanguageSelector'
 import { apiClient } from '@/lib/utils/api-client'
-import { Toast } from '@/components/Toast'
+import { Alert } from '@/components/Alert'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Settings {
@@ -39,7 +39,7 @@ export default function AccountPage() {
     const [settings, setSettings] = useState<Settings | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
+    const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' | 'info' | 'warning' } | null>(null)
     const [isEditingSettings, setIsEditingSettings] = useState(false)
 
     // Form state for settings
@@ -82,7 +82,7 @@ export default function AccountPage() {
             }
         } catch (error) {
             console.error('Error loading settings:', error)
-            showToast(t('account.errorLoadingSettings'))
+            setAlert({ message: t('account.errorLoadingSettings'), type: 'error' })
         } finally {
             setLoading(false)
         }
@@ -107,23 +107,19 @@ export default function AccountPage() {
                 const data = await response.json()
                 setSettings(data.settings)
                 setIsEditingSettings(false)
-                showToast(t('account.settingsSaved'))
+                setAlert({ message: t('account.settingsSaved'), type: 'success' })
             } else {
                 const errorData = await response.json()
-                showToast(errorData.error || t('account.errorSavingSettings'))
+                setAlert({ message: errorData.error || t('account.errorSavingSettings'), type: 'error' })
             }
         } catch (error) {
             console.error('Error saving settings:', error)
-            showToast(t('account.errorSavingSettings'))
+            setAlert({ message: t('account.errorSavingSettings'), type: 'error' })
         } finally {
             setSaving(false)
         }
     }
 
-    const showToast = (message: string) => {
-        setToast({ message, show: true })
-        setTimeout(() => setToast({ ...toast, show: false }), 3000)
-    }
 
     const handleLogout = () => {
         logout()
@@ -146,7 +142,13 @@ export default function AccountPage() {
 
     return (
         <div className="space-y-4">
-            <Toast message={toast.message} show={toast.show} onHide={() => setToast({ ...toast, show: false })} />
+            {alert && (
+                <Alert 
+                    message={alert.message} 
+                    type={alert.type} 
+                    onClose={() => setAlert(null)} 
+                />
+            )}
 
             {/* User Info */}
             <div className="card-3d">
@@ -186,12 +188,12 @@ export default function AccountPage() {
                             </p>
                         </div>
                     )}
-                    {user?.siret && (
+                    {user?.businessId && (
                         <div>
                             <label className="block text-sm font-semibold text-primary mb-1">
-                                {t('auth.siret')}
+                                {t('auth.businessId')}
                             </label>
-                            <p className="text-secondary">{user.siret}</p>
+                            <p className="text-secondary">{user.businessId}</p>
                         </div>
                     )}
                 </div>
@@ -387,26 +389,26 @@ export default function AccountPage() {
                         <div className="space-y-3">
                             <h4 className="font-semibold text-primary">{t('settings.notifications')}</h4>
                             <p className="text-sm text-secondary">
-                                {t('settings.emailNotifications')}: {settings?.emailNotifications ? t('common.yes') : t('common.no')}
+                                {t('settings.emailNotificationsValue', { value: settings?.emailNotifications ? t('common.yes') : t('common.no') })}
                             </p>
                             <p className="text-sm text-secondary">
-                                {t('settings.smsNotifications')}: {settings?.smsNotifications ? t('common.yes') : t('common.no')}
+                                {t('settings.smsNotificationsValue', { value: settings?.smsNotifications ? t('common.yes') : t('common.no') })}
                             </p>
                             <p className="text-sm text-secondary">
-                                {t('settings.reminderBeforeAppointment')}: {settings?.reminderBeforeAppointment || 30} {t('settings.reminderMinutes')}
+                                {t('settings.reminderBeforeAppointmentValue', { minutes: (settings?.reminderBeforeAppointment || 30).toString() })}
                             </p>
                         </div>
 
                         <div className="space-y-3 pt-4 border-t-2 border-[var(--primary)]">
                             <h4 className="font-semibold text-primary">{t('settings.business')}</h4>
                             <p className="text-sm text-secondary">
-                                {t('settings.defaultServiceDuration')}: {settings?.defaultServiceDuration || 60} {t('settings.durationMinutes')}
+                                {t('settings.defaultServiceDurationValue', { duration: (settings?.defaultServiceDuration || 60).toString() })}
                             </p>
                             <p className="text-sm text-secondary">
-                                {t('settings.currency')}: {settings?.currency || 'EUR'}
+                                {t('settings.currencyValue', { currency: settings?.currency || 'EUR' })}
                             </p>
                             <p className="text-sm text-secondary">
-                                {t('settings.taxRate')}: {settings?.taxRate || '0.00'}%
+                                {t('settings.taxRateValue', { rate: settings?.taxRate || '0.00' })}
                             </p>
                         </div>
 
@@ -415,16 +417,16 @@ export default function AccountPage() {
                             {settings?.preferences?.sepaPayment?.iban ? (
                                 <>
                                     <p className="text-sm text-secondary">
-                                        {t('settings.iban')}: {formatIban(settings.preferences.sepaPayment.iban)}
+                                        {t('settings.ibanValue', { iban: formatIban(settings.preferences.sepaPayment.iban) })}
                                     </p>
                                     {settings.preferences.sepaPayment.bic && (
                                         <p className="text-sm text-secondary">
-                                            {t('settings.bic')}: {settings.preferences.sepaPayment.bic}
+                                            {t('settings.bicValue', { bic: settings.preferences.sepaPayment.bic })}
                                         </p>
                                     )}
                                     {settings.preferences.sepaPayment.accountHolder && (
                                         <p className="text-sm text-secondary">
-                                            {t('settings.accountHolder')}: {settings.preferences.sepaPayment.accountHolder}
+                                            {t('settings.accountHolderValue', { holder: settings.preferences.sepaPayment.accountHolder })}
                                         </p>
                                     )}
                                 </>

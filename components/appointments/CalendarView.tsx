@@ -11,10 +11,10 @@ import type { Appointment } from '@/lib/db/schema'
 
 interface CalendarViewProps {
     onSelectAppointment?: (appointment: Appointment) => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function CalendarView({ onSelectAppointment, onShowToast }: CalendarViewProps) {
+export function CalendarView({ onSelectAppointment, onShowAlert }: CalendarViewProps) {
     const { t } = useLanguage()
     const [currentDate, setCurrentDate] = useState(new Date())
     const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -37,7 +37,7 @@ export function CalendarView({ onSelectAppointment, onShowToast }: CalendarViewP
             setAppointments(data.appointments || [])
         } catch (error) {
             console.error('Error loading appointments:', error)
-            onShowToast?.(t('appointments.errorLoading'))
+            onShowAlert?.(t('appointments.errorLoading'))
         } finally {
             setLoading(false)
         }

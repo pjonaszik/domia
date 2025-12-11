@@ -6,18 +6,22 @@ import { useEffect, useState } from 'react'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
+import type { User } from '@/lib/db/schema'
+import { isCompany } from '@/lib/utils/user-type'
 
-type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account'
+type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'offers'
 
 interface BottomNavProps {
     currentPage: Page
     onPageChange: (page: Page) => void
     userId?: string
+    user?: User | null
 }
 
-export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps) {
+export function BottomNav({ currentPage, onPageChange, userId, user }: BottomNavProps) {
     const { t } = useLanguage()
     const [isAdmin, setIsAdmin] = useState(false)
+    const isCompanyUser = isCompany(user)
 
     useEffect(() => {
         const checkAdmin = async () => {
@@ -38,13 +42,26 @@ export function BottomNav({ currentPage, onPageChange, userId }: BottomNavProps)
         checkAdmin()
     }, [userId])
 
-    const items: Array<{ id: Page; label: string; icon: string }> = [
+    // Build navigation items based on user type
+    const baseItems: Array<{ id: Page; label: string; icon: string }> = [
         { id: 'home', label: t('nav.home').toUpperCase(), icon: 'fa-home' },
-        { id: 'tours', label: t('nav.tours').toUpperCase(), icon: 'fa-route' },
-        { id: 'clients', label: t('nav.clients').toUpperCase(), icon: 'fa-users' },
-        { id: 'calendar', label: t('nav.planning').toUpperCase(), icon: 'fa-calendar' },
+        { id: 'clients', label: (isCompanyUser ? t('nav.consultants') : t('nav.clients')).toUpperCase(), icon: 'fa-users' },
         { id: 'stats', label: t('nav.stats').toUpperCase(), icon: 'fa-chart-bar' },
     ]
+
+    // Add tours only for workers (not companies)
+    if (!isCompanyUser) {
+        baseItems.splice(1, 0, { id: 'tours', label: t('nav.tours').toUpperCase(), icon: 'fa-route' })
+    }
+
+    // Add calendar/planning/missions
+    baseItems.splice(isCompanyUser ? 2 : 3, 0, {
+        id: 'calendar',
+        label: (isCompanyUser ? t('nav.missions') : t('nav.planning')).toUpperCase(),
+        icon: 'fa-calendar'
+    })
+
+    const items = baseItems
 
     return (
         <nav

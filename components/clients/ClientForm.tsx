@@ -11,10 +11,10 @@ interface ClientFormProps {
     client?: Client
     onSave: () => void
     onCancel: () => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientFormProps) {
+export function ClientForm({ client, onSave, onCancel, onShowAlert }: ClientFormProps) {
     const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -48,11 +48,11 @@ export function ClientForm({ client, onSave, onCancel, onShowToast }: ClientForm
                 throw new Error(data.error || t('clients.errorSaving'))
             }
 
-            onShowToast?.(client ? t('clients.clientUpdated') : t('clients.clientCreated'))
+            onShowAlert?.(client ? t('clients.clientUpdated') : t('clients.clientCreated'), 'success')
             onSave()
         } catch (error) {
             console.error('Error saving client:', error)
-            onShowToast?.(error instanceof Error ? error.message : t('clients.errorSaving'))
+            onShowAlert?.(error instanceof Error ? error.message : t('clients.errorSaving'), 'error')
         } finally {
             setLoading(false)
         }

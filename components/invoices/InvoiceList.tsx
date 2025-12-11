@@ -11,10 +11,10 @@ import type { Invoice } from '@/lib/db/schema'
 interface InvoiceListProps {
     clientId?: string
     onSelectInvoice?: (invoice: Invoice) => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function InvoiceList({ clientId, onSelectInvoice, onShowToast }: InvoiceListProps) {
+export function InvoiceList({ clientId, onSelectInvoice, onShowAlert }: InvoiceListProps) {
     const { t } = useLanguage()
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [loading, setLoading] = useState(true)
@@ -37,7 +37,7 @@ export function InvoiceList({ clientId, onSelectInvoice, onShowToast }: InvoiceL
             setInvoices(data.invoices || [])
         } catch (error) {
             console.error('Error loading invoices:', error)
-            onShowToast?.(t('invoices.errorLoading'))
+            onShowAlert?.(t('invoices.errorLoading'))
         } finally {
             setLoading(false)
         }

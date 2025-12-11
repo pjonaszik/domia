@@ -10,10 +10,10 @@ import type { Invoice, InvoiceItem } from '@/lib/db/schema'
 
 interface InvoicePreviewProps {
     invoiceId: string
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function InvoicePreview({ invoiceId, onShowToast }: InvoicePreviewProps) {
+export function InvoicePreview({ invoiceId, onShowAlert }: InvoicePreviewProps) {
     const { t } = useLanguage()
     const [invoice, setInvoice] = useState<Invoice | null>(null)
     const [items, setItems] = useState<InvoiceItem[]>([])
@@ -33,7 +33,7 @@ export function InvoicePreview({ invoiceId, onShowToast }: InvoicePreviewProps) 
             setItems(data.items || [])
         } catch (error) {
             console.error('Error loading invoice:', error)
-            onShowToast?.(t('invoices.errorLoading'))
+            onShowAlert?.(t('invoices.errorLoading'))
         } finally {
             setLoading(false)
         }

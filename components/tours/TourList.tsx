@@ -10,10 +10,10 @@ import type { Tour } from '@/lib/db/schema'
 
 interface TourListProps {
     onSelectTour?: (tour: Tour) => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function TourList({ onSelectTour, onShowToast }: TourListProps) {
+export function TourList({ onSelectTour, onShowAlert }: TourListProps) {
     const { t } = useLanguage()
     const [tours, setTours] = useState<Tour[]>([])
     const [loading, setLoading] = useState(true)
@@ -31,7 +31,7 @@ export function TourList({ onSelectTour, onShowToast }: TourListProps) {
             setTours(data.tours || [])
         } catch (error) {
             console.error('Error loading tours:', error)
-            onShowToast?.(t('tours.errorLoading'))
+            onShowAlert?.(t('tours.errorLoading'))
         } finally {
             setLoading(false)
         }

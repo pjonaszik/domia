@@ -23,7 +23,7 @@ export const users = pgTable('users', {
     profession: varchar('profession', { length: 100 }), // 'infirmiere', 'aide_soignante', 'agent_entretien', 'aide_domicile', 'garde_enfants'
     adeliNumber: varchar('adeli_number', { length: 50 }), // Numéro ADELI pour infirmières
     agrementNumber: varchar('agrement_number', { length: 50 }), // Numéro d'agrément
-    siret: varchar('siret', { length: 14 }), // Numéro SIRET
+    businessId: varchar('business_id', { length: 50 }), // Numéro SIRET (France), NIF (Espagne), ou autre identifiant selon le pays
     
     // Address
     address: text('address'),
@@ -42,8 +42,12 @@ export const users = pgTable('users', {
 }, (table) => [
     index('user_email_idx').on(table.email),
     index('user_profession_idx').on(table.profession),
-    index('user_siret_idx').on(table.siret), // For SIRET lookups
+    index('user_business_id_idx').on(table.businessId), // For business ID lookups
+    index('user_country_idx').on(table.country), // For country-based queries
     index('user_created_at_idx').on(table.createdAt), // For user analytics
+    index('user_first_name_idx').on(table.firstName), // For consultant search
+    index('user_last_name_idx').on(table.lastName), // For consultant search
+    index('user_city_idx').on(table.city), // For consultant search
 ]);
 
 // Admins table - Separate table for administrators
@@ -294,6 +298,82 @@ export const documents = pgTable('documents', {
     index('document_user_type_idx').on(table.userId, table.type), // Composite for filtered document lists
 ]);
 
+// Job Offers table - Offres de mission
+export const jobOffers = pgTable('job_offers', {
+    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
+    clientId: varchar('client_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }), // Le professionnel qui envoie l'offre
+    workerId: varchar('worker_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }), // Le travailleur destinataire
+    
+    title: varchar('title', { length: 255 }).notNull(),
+    description: text('description'),
+    startDate: timestamp('start_date').notNull(),
+    endDate: timestamp('end_date').notNull(),
+    
+    address: text('address').notNull(),
+    city: varchar('city', { length: 100 }).notNull(),
+    postalCode: varchar('postal_code', { length: 10 }).notNull(),
+    country: varchar('country', { length: 100 }).default('France'),
+    
+    serviceType: varchar('service_type', { length: 100 }), // Type de service requis
+    compensation: decimal('compensation', { precision: 10, scale: 2 }), // Rémunération proposée
+    notes: text('notes'), // Notes supplémentaires
+    
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // 'pending', 'accepted', 'declined', 'expired'
+    respondedAt: timestamp('responded_at'),
+    
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    index('job_offer_worker_idx').on(table.workerId),
+    index('job_offer_client_idx').on(table.clientId),
+    index('job_offer_status_idx').on(table.status),
+    index('job_offer_worker_status_idx').on(table.workerId, table.status), // Composite pour les requêtes filtrées
+    index('job_offer_client_status_idx').on(table.clientId, table.status),
+    index('job_offer_dates_idx').on(table.startDate, table.endDate), // Pour les requêtes de plage de dates
+]);
+
+// Worker-Clients junction table - Relation many-to-many entre travailleurs et clients
+export const workerClients = pgTable('worker_clients', {
+    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
+    workerId: varchar('worker_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    clientId: varchar('client_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }), // Le professionnel client
+    originalClientId: varchar('original_client_id', { length: 128 }).references(() => clients.id, { onDelete: 'set null', onUpdate: 'cascade' }), // Si le client existait déjà dans la table clients
+    
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('worker_client_worker_idx').on(table.workerId),
+    index('worker_client_client_idx').on(table.clientId),
+    index('worker_client_unique_idx').on(table.workerId, table.clientId), // Unique constraint pour éviter les doublons
+]);
+
+// Consultant Pools table - Catégories de consultants pour les entreprises
+export const consultantPools = pgTable('consultant_pools', {
+    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
+    companyId: varchar('company_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }), // L'entreprise propriétaire
+    name: varchar('name', { length: 255 }).notNull(), // Nom de la catégorie/pool
+    color: varchar('color', { length: 50 }), // Couleur optionnelle pour l'affichage
+    description: text('description'), // Description optionnelle
+    
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    index('pool_company_idx').on(table.companyId),
+    index('pool_company_name_idx').on(table.companyId, table.name), // Pour les recherches par nom
+]);
+
+// Consultant-Pool junction table - Relation many-to-many entre consultants et pools
+export const consultantPoolMembers = pgTable('consultant_pool_members', {
+    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
+    poolId: varchar('pool_id', { length: 128 }).notNull().references(() => consultantPools.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    consultantId: varchar('consultant_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }), // Le consultant (worker)
+    
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('pool_member_pool_idx').on(table.poolId),
+    index('pool_member_consultant_idx').on(table.consultantId),
+    index('pool_member_unique_idx').on(table.poolId, table.consultantId), // Unique constraint pour éviter les doublons
+]);
+
 // Settings table - User preferences
 export const settings = pgTable('settings', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
@@ -417,6 +497,60 @@ export const settingsRelations = relations(settings, ({ one }) => ({
     }),
 }));
 
+export const jobOffersRelations = relations(jobOffers, ({ one }) => ({
+    client: one(users, {
+        fields: [jobOffers.clientId],
+        references: [users.id],
+        relationName: 'offerClient',
+    }),
+    worker: one(users, {
+        fields: [jobOffers.workerId],
+        references: [users.id],
+        relationName: 'offerWorker',
+    }),
+}));
+
+export const workerClientsRelations = relations(workerClients, ({ one }) => ({
+    worker: one(users, {
+        fields: [workerClients.workerId],
+        references: [users.id],
+        relationName: 'workerClientWorker',
+    }),
+    client: one(users, {
+        fields: [workerClients.clientId],
+        references: [users.id],
+        relationName: 'workerClientClient',
+    }),
+    originalClient: one(clients, {
+        fields: [workerClients.originalClientId],
+        references: [clients.id],
+    }),
+}));
+
+export const consultantPoolsRelations = relations(consultantPools, ({ one, many }) => ({
+    company: one(users, {
+        fields: [consultantPools.companyId],
+        references: [users.id],
+        relationName: 'poolCompany',
+    }),
+    members: many(consultantPoolMembers, {
+        relationName: 'poolMembers',
+    }),
+}));
+
+export const consultantPoolMembersRelations = relations(consultantPoolMembers, ({ one }) => ({
+    pool: one(consultantPools, {
+        fields: [consultantPoolMembers.poolId],
+        references: [consultantPools.id],
+        relationName: 'poolMembers',
+    }),
+    consultant: one(users, {
+        fields: [consultantPoolMembers.consultantId],
+        references: [users.id],
+        relationName: 'poolMemberConsultant',
+    }),
+}));
+
 // Types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -438,3 +572,11 @@ export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
+export type JobOffer = typeof jobOffers.$inferSelect;
+export type NewJobOffer = typeof jobOffers.$inferInsert;
+export type WorkerClient = typeof workerClients.$inferSelect;
+export type NewWorkerClient = typeof workerClients.$inferInsert;
+export type ConsultantPool = typeof consultantPools.$inferSelect;
+export type NewConsultantPool = typeof consultantPools.$inferInsert;
+export type ConsultantPoolMember = typeof consultantPoolMembers.$inferSelect;
+export type NewConsultantPoolMember = typeof consultantPoolMembers.$inferInsert;

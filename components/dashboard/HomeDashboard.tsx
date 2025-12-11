@@ -7,11 +7,12 @@ import { apiClient } from '@/lib/utils/api-client'
 import { isToday, isTomorrow } from 'date-fns'
 import type { User, Appointment, Tour } from '@/lib/db/schema'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { isCompany } from '@/lib/utils/user-type'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface HomeDashboardProps {
     user: User
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
     onNavigate?: (page: 'tours' | 'clients' | 'calendar') => void
 }
 
@@ -22,12 +23,13 @@ interface QuickStats {
     monthlyRevenue: number
 }
 
-export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardProps) {
+export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardProps) {
     const { t } = useLanguage()
     const [stats, setStats] = useState<QuickStats | null>(null)
     const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([])
     const [todayTours, setTodayTours] = useState<Tour[]>([])
     const [loading, setLoading] = useState(true)
+    const isCompanyUser = isCompany(user)
 
     useEffect(() => {
         loadDashboardData()
@@ -49,28 +51,51 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                 })
             }
 
-            // Load today's and tomorrow's appointments
-            const today = new Date()
+            // Load appointments - different logic for companies vs workers
+            const now = new Date()
+            const today = new Date(now)
+            today.setHours(0, 0, 0, 0)
             const tomorrow = new Date(today)
             tomorrow.setDate(tomorrow.getDate() + 1)
             
+            // For companies: load active missions (started but not ended)
+            // For workers: load upcoming appointments (today and tomorrow)
+            const startDate = isCompanyUser ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) : today // Last 7 days for companies to catch ongoing missions
+            const endDate = isCompanyUser ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) : tomorrow // Next 30 days for companies
+            
             const appointmentsResponse = await apiClient.get(
-                `/dashboard/api/appointments?startDate=${today.toISOString().split('T')[0]}&endDate=${tomorrow.toISOString().split('T')[0]}`
+                `/dashboard/api/appointments?startDate=${startDate.toISOString().split('T')[0]}&endDate=${endDate.toISOString().split('T')[0]}`
             )
             if (appointmentsResponse.ok) {
                 const appointmentsData = await appointmentsResponse.json()
                 const appointments = appointmentsData.appointments || []
-                // Filter and sort upcoming appointments
-                const upcoming = appointments
-                    .filter((apt: Appointment) => {
-                        const aptDate = new Date(apt.startTime)
-                        return aptDate >= today
-                    })
-                    .sort((a: Appointment, b: Appointment) => {
-                        return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-                    })
-                    .slice(0, 5) // Show only next 5
-                setUpcomingAppointments(upcoming)
+                
+                let filtered: Appointment[] = []
+                if (isCompanyUser) {
+                    // For companies: show active missions (scheduled, started but not ended)
+                    filtered = appointments
+                        .filter((apt: Appointment) => {
+                            const startTime = new Date(apt.startTime)
+                            const endTime = new Date(apt.endTime)
+                            return apt.status === 'scheduled' && startTime <= now && endTime >= now
+                        })
+                        .sort((a: Appointment, b: Appointment) => {
+                            return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+                        })
+                        .slice(0, 5) // Show only 5 active missions
+                } else {
+                    // For workers: show upcoming appointments
+                    filtered = appointments
+                        .filter((apt: Appointment) => {
+                            const aptDate = new Date(apt.startTime)
+                            return aptDate >= today
+                        })
+                        .sort((a: Appointment, b: Appointment) => {
+                            return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+                        })
+                        .slice(0, 5) // Show only next 5
+                }
+                setUpcomingAppointments(filtered)
             }
 
             // Load today's tours
@@ -91,7 +116,7 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
             }
         } catch (error) {
             console.error('Error loading dashboard data:', error)
-            onShowToast?.(t('dashboard.errorLoading'))
+            onShowAlert?.(t('dashboard.errorLoading'), 'error')
         } finally {
             setLoading(false)
         }
@@ -112,27 +137,29 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
 
     return (
         <div className="space-y-5">
-            {/* Welcome Header */}
-            <div className="card-3d">
-                <div className="flex items-center justify-between mb-2">
-                    <div>
-                        <h2 className="text-2xl font-bold text-primary">
-                            {t('dashboard.welcomeUser', { name: user.firstName || t('common.user') })} 👋
-                        </h2>
-                        <p className="text-secondary text-sm mt-1">
-                            {user.profession || t('dashboard.profession')}
+            {/* Welcome Header - Only for workers, not companies */}
+            {!isCompanyUser && (
+                <div className="card-3d">
+                    <div className="flex items-center justify-between mb-2">
+                        <div>
+                            <h2 className="text-2xl font-bold text-primary">
+                                {t('dashboard.welcomeUser', { name: user.firstName || t('common.user') })} 👋
+                            </h2>
+                            <p className="text-secondary text-sm mt-1">
+                                {user.profession || t('dashboard.profession')}
+                            </p>
+                        </div>
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-white text-2xl font-bold">
+                            {(user.firstName || user.email || 'U')[0].toUpperCase()}
+                        </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t-2 border-[var(--tertiary)]">
+                        <p className="text-sm text-secondary italic">
+                            "{t('dashboard.tagline')}"
                         </p>
                     </div>
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-white text-2xl font-bold">
-                        {(user.firstName || user.email || 'U')[0].toUpperCase()}
-                    </div>
                 </div>
-                <div className="mt-4 pt-4 border-t-2 border-[var(--tertiary)]">
-                    <p className="text-sm text-secondary italic">
-                        "{t('dashboard.tagline')}"
-                    </p>
-                </div>
-            </div>
+            )}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-3">
@@ -142,7 +169,9 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                             <i className="fas fa-users text-[var(--primary)]"></i>
                         </div>
                     </div>
-                    <p className="text-xs text-secondary mb-1">{t('dashboard.clients')}</p>
+                    <p className="text-xs text-secondary mb-1">
+                        {isCompanyUser ? t('dashboard.pool') : t('dashboard.clients')}
+                    </p>
                     <p className="text-2xl font-bold text-primary">{stats?.clients || 0}</p>
                 </div>
 
@@ -156,15 +185,18 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                     <p className="text-2xl font-bold text-primary">{stats?.todayAppointments || 0}</p>
                 </div>
 
-                <div className="card-3d p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                            <i className="fas fa-route text-purple-600"></i>
+                {/* Tours - Only for workers, not companies */}
+                {!isCompanyUser && (
+                    <div className="card-3d p-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                                <i className="fas fa-route text-purple-600"></i>
+                            </div>
                         </div>
+                        <p className="text-xs text-secondary mb-1">{t('dashboard.todayTours')}</p>
+                        <p className="text-2xl font-bold text-primary">{stats?.todayTours || 0}</p>
                     </div>
-                    <p className="text-xs text-secondary mb-1">{t('dashboard.todayTours')}</p>
-                    <p className="text-2xl font-bold text-primary">{stats?.todayTours || 0}</p>
-                </div>
+                )}
 
                 <div className="card-3d p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -182,51 +214,62 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
             {/* Quick Actions */}
             <div className="card-3d">
                 <h3 className="text-lg font-bold text-primary mb-3">{t('dashboard.quickActions')}</h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className={`grid gap-3 ${isCompanyUser ? 'grid-cols-2' : 'grid-cols-2'}`}>
                     <button
                         onClick={() => onNavigate?.('clients')}
                         className="flex items-center gap-3 p-4 rounded-lg border-2 border-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-all"
-                        aria-label={t('dashboard.createNewClient')}
+                        aria-label={isCompanyUser ? t('dashboard.newConsultant') : t('dashboard.createNewClient')}
                     >
                         <i className="fas fa-user-plus text-xl" aria-hidden="true"></i>
-                        <span className="font-semibold">{t('dashboard.newClient')}</span>
+                        <span className="font-semibold">
+                            {isCompanyUser ? t('dashboard.newConsultant') : t('dashboard.newClient')}
+                        </span>
                     </button>
                     <button
                         onClick={() => onNavigate?.('calendar')}
                         className="flex items-center gap-3 p-4 rounded-lg border-2 border-[var(--secondary)] hover:bg-[var(--secondary)] hover:text-white transition-all"
-                        aria-label={t('dashboard.createNewAppointment')}
+                        aria-label={isCompanyUser ? t('dashboard.newMission') : t('dashboard.createNewAppointment')}
                     >
                         <i className="fas fa-calendar-plus text-xl" aria-hidden="true"></i>
-                        <span className="font-semibold">{t('dashboard.newAppointment')}</span>
+                        <span className="font-semibold">
+                            {isCompanyUser ? t('dashboard.newMission') : t('dashboard.newAppointment')}
+                        </span>
                     </button>
-                    <button
-                        onClick={() => onNavigate?.('tours')}
-                        className="flex items-center gap-3 p-4 rounded-lg border-2 border-purple-500 hover:bg-purple-500 hover:text-white transition-all"
-                        aria-label={t('dashboard.optimizeTour')}
-                    >
-                        <i className="fas fa-route text-xl" aria-hidden="true"></i>
-                        <span className="font-semibold">{t('dashboard.optimize')}</span>
-                    </button>
-                    <button
-                        onClick={() => onNavigate?.('calendar')}
-                        className="flex items-center gap-3 p-4 rounded-lg border-2 border-orange-500 hover:bg-orange-500 hover:text-white transition-all"
-                        aria-label={t('dashboard.viewPlanning')}
-                    >
-                        <i className="fas fa-calendar-alt text-xl" aria-hidden="true"></i>
-                        <span className="font-semibold">{t('nav.planning')}</span>
-                    </button>
+                    {/* Optimize and Planning - Only for workers */}
+                    {!isCompanyUser && (
+                        <>
+                            <button
+                                onClick={() => onNavigate?.('tours')}
+                                className="flex items-center gap-3 p-4 rounded-lg border-2 border-purple-500 hover:bg-purple-500 hover:text-white transition-all"
+                                aria-label={t('dashboard.optimizeTour')}
+                            >
+                                <i className="fas fa-route text-xl" aria-hidden="true"></i>
+                                <span className="font-semibold">{t('dashboard.optimize')}</span>
+                            </button>
+                            <button
+                                onClick={() => onNavigate?.('calendar')}
+                                className="flex items-center gap-3 p-4 rounded-lg border-2 border-orange-500 hover:bg-orange-500 hover:text-white transition-all"
+                                aria-label={t('dashboard.viewPlanning')}
+                            >
+                                <i className="fas fa-calendar-alt text-xl" aria-hidden="true"></i>
+                                <span className="font-semibold">{t('nav.planning')}</span>
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
-            {/* Upcoming Appointments */}
+            {/* Upcoming Appointments / Active Missions */}
             {upcomingAppointments.length > 0 && (
                 <div className="card-3d">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-bold text-primary">{t('dashboard.nextAppointments')}</h3>
+                        <h3 className="text-lg font-bold text-primary">
+                            {isCompanyUser ? t('dashboard.activeMissions') : t('dashboard.nextAppointments')}
+                        </h3>
                     <button
                         onClick={() => onNavigate?.('calendar')}
                         className="text-sm text-[var(--primary)] font-semibold hover:underline"
-                        aria-label={t('dashboard.viewAllAppointments')}
+                        aria-label={isCompanyUser ? t('dashboard.activeMissions') : t('dashboard.viewAllAppointments')}
                     >
                         {t('dashboard.viewAll')}
                     </button>
@@ -271,8 +314,8 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
                 </div>
             )}
 
-            {/* Today's Tours */}
-            {todayTours.length > 0 && (
+            {/* Today's Tours - Only for workers */}
+            {!isCompanyUser && todayTours.length > 0 && (
                 <div className="card-3d">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-lg font-bold text-primary">{t('dashboard.todayToursTitle')}</h3>
@@ -318,16 +361,18 @@ export function HomeDashboard({ user, onShowToast, onNavigate }: HomeDashboardPr
             )}
 
             {/* Empty States */}
-            {upcomingAppointments.length === 0 && todayTours.length === 0 && (
+            {upcomingAppointments.length === 0 && (!isCompanyUser && todayTours.length === 0) && (
                 <div className="card-3d text-center py-8">
                     <i className="fas fa-calendar-check text-4xl text-[var(--text-light)] mb-4"></i>
-                    <p className="text-secondary mb-2">{t('dashboard.noAppointments')}</p>
+                    <p className="text-secondary mb-2">
+                        {isCompanyUser ? t('dashboard.noMissions') : t('dashboard.noAppointments')}
+                    </p>
                     <button
                         onClick={() => onNavigate?.('calendar')}
                         className="text-sm text-[var(--primary)] font-semibold hover:underline"
-                        aria-label={t('dashboard.createNewAppointment')}
+                        aria-label={isCompanyUser ? t('dashboard.newMission') : t('dashboard.createNewAppointment')}
                     >
-                        {t('dashboard.createAppointment')}
+                        {isCompanyUser ? t('dashboard.newMission') : t('dashboard.createAppointment')}
                     </button>
                 </div>
             )}

@@ -12,7 +12,7 @@ interface InvoiceFormProps {
     clientId?: string
     onSave: () => void
     onCancel: () => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
 interface InvoiceItem {
@@ -23,7 +23,7 @@ interface InvoiceItem {
     appointmentId?: string
 }
 
-export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }: InvoiceFormProps) {
+export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowAlert }: InvoiceFormProps) {
     const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<Client[]>([])
@@ -167,11 +167,11 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                 throw new Error(data.error || t('invoices.errorSaving'))
             }
 
-            onShowToast?.(invoice ? t('invoices.invoiceUpdated') : t('invoices.invoiceCreated'))
+            onShowAlert?.(invoice ? t('invoices.invoiceUpdated') : t('invoices.invoiceCreated'))
             onSave()
         } catch (error) {
             console.error('Error saving invoice:', error)
-            onShowToast?.(error instanceof Error ? error.message : t('invoices.errorSaving'))
+            onShowAlert?.(error instanceof Error ? error.message : t('invoices.errorSaving'))
         } finally {
             setLoading(false)
         }
@@ -296,7 +296,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowToast }
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="font-semibold text-primary">
-                                    {t('invoices.total')}: {item.total.toFixed(2)} €
+                                    {t('invoices.totalValue', { amount: item.total.toFixed(2) })}
                                 </span>
                                 <button
                                     type="button"

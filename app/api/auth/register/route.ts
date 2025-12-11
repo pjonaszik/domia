@@ -9,7 +9,7 @@ import { hashPassword, generateToken } from '@/lib/utils/auth';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { email, password, firstName, lastName, profession, siret } = body;
+        const { email, password, firstName, lastName, profession, businessId, phone, country } = body;
 
         // Validation
         if (!email || !password) {
@@ -26,19 +26,26 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Validate SIRET format (14 digits)
-        if (!siret) {
+        // Validate business ID
+        if (!businessId) {
             return NextResponse.json(
-                { error: 'SIRET number is required' },
+                { error: 'Business ID is required' },
                 { status: 400 }
             );
         }
 
-        const siretRegex = /^\d{14}$/
-        const siretCleaned = siret.replace(/\s/g, '')
-        if (!siretRegex.test(siretCleaned)) {
+        // Simple validation: alphanumeric, uppercase, allowing hyphens
+        const businessIdCleaned = businessId.replace(/\s/g, '').toUpperCase()
+        if (businessIdCleaned.length < 3 || businessIdCleaned.length > 50) {
             return NextResponse.json(
-                { error: 'SIRET must contain exactly 14 digits' },
+                { error: 'Invalid business ID format' },
+                { status: 400 }
+            );
+        }
+        // Alphanumeric and hyphens only
+        if (!/^[A-Z0-9-]+$/.test(businessIdCleaned)) {
+            return NextResponse.json(
+                { error: 'Business ID must contain only alphanumeric characters and hyphens' },
                 { status: 400 }
             );
         }
@@ -60,6 +67,9 @@ export async function POST(req: NextRequest) {
         // Hash password
         const passwordHash = await hashPassword(password);
 
+        // Format phone (remove spaces)
+        const phoneCleaned = phone ? phone.replace(/\s/g, '') : null;
+
         // Create user
         const [newUser] = await db
             .insert(users)
@@ -69,7 +79,9 @@ export async function POST(req: NextRequest) {
                 firstName: firstName || null,
                 lastName: lastName || null,
                 profession: profession || null,
-                siret: siretCleaned || null,
+                businessId: businessIdCleaned || null,
+                phone: phoneCleaned || null,
+                country: country || 'France',
             })
             .returning();
 

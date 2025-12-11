@@ -5,6 +5,8 @@
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { isCompany } from '@/lib/utils/user-type'
 
 interface Stats {
     clients: { total: number }
@@ -14,6 +16,8 @@ interface Stats {
 
 export function DashboardStats() {
     const { t } = useLanguage()
+    const { user } = useAuth()
+    const isCompanyUser = isCompany(user)
     const [stats, setStats] = useState<Stats | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -61,7 +65,9 @@ export function DashboardStats() {
                 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="stat-card">
-                        <p className="text-sm text-secondary mb-1">{t('dashboard.clients')}</p>
+                        <p className="text-sm text-secondary mb-1">
+                            {isCompanyUser ? t('dashboard.consultants') : t('dashboard.clients')}
+                        </p>
                         <p className="text-2xl font-bold text-primary">{stats.clients.total}</p>
                     </div>
                     <div className="stat-card">
@@ -93,8 +99,8 @@ export function DashboardStats() {
                             </span>
                         </div>
                         <div className="flex justify-between text-sm text-secondary mt-2">
-                            <span>{t('dashboard.invoices')}: {stats.revenue.invoices.total}</span>
-                            <span>{t('dashboard.paid')}: {stats.revenue.invoices.paid}</span>
+                            <span>{t('dashboard.invoicesCount', { count: stats.revenue.invoices.total.toString() })}</span>
+                            <span>{t('dashboard.paidCount', { count: stats.revenue.invoices.paid.toString() })}</span>
                         </div>
                     </div>
                 </div>

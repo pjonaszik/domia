@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { BottomNav } from '@/components/BottomNav'
-import { Toast } from '@/components/Toast'
+import { Alert } from '@/components/Alert'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { ClientList } from '@/components/clients/ClientList'
 import { TourList } from '@/components/tours/TourList'
@@ -14,17 +14,18 @@ import { CalendarView } from '@/components/appointments/CalendarView'
 import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { HomeDashboard } from '@/components/dashboard/HomeDashboard'
 import AccountPage from './account/page'
+import OffersPage from './offers/page'
 
-type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account'
+type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'offers'
 
 export default function DashboardPage() {
   const { user, loading: authLoading, error: authError } = useAuth()
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState<Page>('home')
-  const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
+  const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' | 'info' | 'warning' } | null>(null)
 
-  const showToast = useCallback((message: string) => {
-    setToast({ message, show: true })
+  const showAlert = useCallback((message: string, type: 'error' | 'success' | 'info' | 'warning' = 'error') => {
+    setAlert({ message, type })
   }, [])
 
   // Redirect to landing if not authenticated
@@ -34,13 +35,15 @@ export default function DashboardPage() {
     }
   }, [authLoading, user, router])
 
-  // Show toast for auth errors
+  // Show alert for auth errors
   useEffect(() => {
     if (authError) {
-      const timer = setTimeout(() => showToast(authError), 0)
+      const timer = setTimeout(() => {
+        setAlert({ message: authError, type: 'error' })
+      }, 0)
       return () => clearTimeout(timer)
     }
-  }, [authError, showToast])
+  }, [authError])
 
   // Scroll to top on page change
   useEffect(() => {
@@ -64,7 +67,10 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-checkered relative w-full max-w-full overflow-x-clip" style={{ width: '100vw', maxWidth: '100vw', overflowX: 'clip' }}>
-      <DashboardHeader onNavigateToAccount={() => setCurrentPage('account')} />
+      <DashboardHeader 
+        onNavigateToAccount={() => setCurrentPage('account')}
+        onNavigateToOffers={() => setCurrentPage('offers')}
+      />
       
       <div className="fixed inset-0 overflow-hidden pointer-events-none w-full max-w-full" aria-hidden="true" style={{ width: '100vw', maxWidth: '100vw' }}>
         <div className="floating-shape rounded-full" style={{ top: '10%', left: '10%', width: '80px', height: '80px', background: 'var(--primary)', animationDelay: '0s', opacity: 0.05 }} aria-hidden="true" />
@@ -77,24 +83,24 @@ export default function DashboardPage() {
           <div className="px-5 pt-5">
             <HomeDashboard 
               user={user} 
-              onShowToast={showToast}
+              onShowAlert={showAlert}
               onNavigate={(page) => setCurrentPage(page)}
             />
           </div>
         )}
         {currentPage === 'tours' && (
           <div className="px-5 pt-5">
-            <TourList onShowToast={showToast} />
+            <TourList onShowAlert={showAlert} />
           </div>
         )}
         {currentPage === 'clients' && (
           <div className="px-5 pt-5">
-            <ClientList onShowToast={showToast} />
+            <ClientList onShowAlert={showAlert} />
           </div>
         )}
         {currentPage === 'calendar' && (
           <div className="px-5 pt-5">
-            <CalendarView onShowToast={showToast} />
+            <CalendarView onShowAlert={showAlert} />
           </div>
         )}
         {currentPage === 'stats' && (
@@ -107,10 +113,25 @@ export default function DashboardPage() {
             <AccountPage />
           </div>
         )}
+        {currentPage === 'offers' && (
+          <div className="px-5 pt-5">
+            <OffersPage onShowAlert={showAlert} />
+          </div>
+        )}
       </main>
 
-      <BottomNav currentPage={currentPage} onPageChange={setCurrentPage} userId={user?.id} />
-      <Toast message={toast.message} show={toast.show} onHide={() => setToast({ ...toast, show: false })} />
+      <BottomNav currentPage={currentPage} onPageChange={setCurrentPage} userId={user?.id} user={user} />
+      {alert && (
+        <div className="fixed top-0 left-0 right-0 z-50 p-4" style={{ paddingTop: 'calc(90px + env(safe-area-inset-top))' }}>
+          <div className="max-w-md mx-auto">
+            <Alert 
+              message={alert.message} 
+              type={alert.type} 
+              onClose={() => setAlert(null)} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

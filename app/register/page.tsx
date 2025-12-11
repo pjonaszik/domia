@@ -2,29 +2,36 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { Toast } from '@/components/Toast'
+import { Alert } from '@/components/Alert'
 import { LanguageSelector } from '@/components/LanguageSelector'
+import { getBusinessIdInfo, SUPPORTED_COUNTRIES, type Country } from '@/lib/utils/business-id'
 
 export default function RegisterPage() {
     const router = useRouter()
     const { register } = useAuth()
-    const { t } = useLanguage()
+    const { t, language } = useLanguage()
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         confirmPassword: '',
         firstName: '',
         lastName: '',
+        companyName: '',
+        personType: 'physical' as 'physical' | 'legal',
         profession: '',
-        siret: '',
+        phone: '',
+        country: 'France' as Country,
+        businessId: '',
     })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
+    
+    // Get business ID info based on selected country
+    const businessIdInfo = useMemo(() => getBusinessIdInfo(formData.country, language), [formData.country, language])
 
     const professions = [
         { value: 'infirmiere', translationKey: 'professionInfirmiere' },
@@ -39,6 +46,33 @@ export default function RegisterPage() {
         setLoading(true)
         setError('')
 
+        // Validate required fields based on person type
+        if (formData.personType === 'physical') {
+            if (!formData.firstName) {
+                setError(t('auth.firstNameRequired'))
+                setLoading(false)
+                return
+            }
+            if (!formData.lastName) {
+                setError(t('auth.lastNameRequired'))
+                setLoading(false)
+                return
+            }
+        } else {
+            if (!formData.companyName) {
+                setError(t('auth.companyNameRequired'))
+                setLoading(false)
+                return
+            }
+        }
+
+        // Phone is required for both types
+        if (!formData.phone) {
+            setError(t('auth.phoneRequired'))
+            setLoading(false)
+            return
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setError(t('auth.passwordMismatch'))
             setLoading(false)
@@ -51,35 +85,46 @@ export default function RegisterPage() {
             return
         }
 
-        // Validate SIRET format (14 digits)
-        if (!formData.siret) {
-            setError(t('auth.siretRequired'))
+        // Validate business ID based on country
+        if (!formData.businessId) {
+            setError(t('auth.businessIdRequired'))
             setLoading(false)
             return
         }
 
-        const siretRegex = /^\d{14}$/
-        const siretCleaned = formData.siret.replace(/\s/g, '')
-        if (!siretRegex.test(siretCleaned)) {
-            setError(t('auth.siretInvalid'))
+        if (!businessIdInfo.validate(formData.businessId)) {
+            setError(t('auth.businessIdInvalid'))
             setLoading(false)
             return
         }
 
         try {
+            // For physical person: use firstName/lastName
+            // For legal entity: use companyName as lastName, firstName as null
+            const firstName = formData.personType === 'physical' ? formData.firstName : null
+            const lastName = formData.personType === 'physical' ? formData.lastName : formData.companyName
+            const profession = formData.personType === 'physical' ? formData.profession : null
+            
+            // Clean phone number (remove spaces)
+            const phoneCleaned = formData.phone ? formData.phone.replace(/\s/g, '') : undefined
+            
+            // Clean business ID (remove spaces, convert to uppercase for VAT)
+            const businessIdCleaned = formData.businessId.replace(/\s/g, '').toUpperCase()
+            
             await register(
                 formData.email,
                 formData.password,
-                formData.firstName || undefined,
-                formData.lastName || undefined,
-                formData.profession || undefined,
-                siretCleaned
+                firstName || undefined,
+                lastName || undefined,
+                profession || undefined,
+                businessIdCleaned,
+                phoneCleaned,
+                formData.country
             )
             router.push('/dashboard')
         } catch (err) {
             const errorMsg = err instanceof Error ? err.message : t('auth.registerError')
             setError(errorMsg)
-            setToast({ message: errorMsg, show: true })
         } finally {
             setLoading(false)
         }
@@ -94,41 +139,111 @@ export default function RegisterPage() {
                 <h1 className="text-2xl font-bold text-primary mb-6 text-center">{t('auth.register')}</h1>
                 
                 {error && (
-                    <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
-                        {error}
-                    </div>
+                    <Alert message={error} type="error" onClose={() => setError('')} />
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4" aria-label={t('auth.register')}>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="register-firstname" className="block text-sm font-semibold text-primary mb-1">
-                                {t('auth.firstName')}
+                    {/* Type de personne - EN PREMIER */}
+                    <div>
+                        <label className="block text-sm font-semibold text-primary mb-2">
+                            {t('auth.personType')} *
+                        </label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="personType"
+                                    value="physical"
+                                    checked={formData.personType === 'physical'}
+                                    onChange={(e) => setFormData({ ...formData, personType: e.target.value as 'physical' | 'legal' })}
+                                    className="mr-2"
+                                />
+                                <span>{t('auth.personTypePhysical')}</span>
                             </label>
-                            <input
-                                id="register-firstname"
-                                type="text"
-                                autoComplete="given-name"
-                                value={formData.firstName}
-                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="register-lastname" className="block text-sm font-semibold text-primary mb-1">
-                                {t('auth.lastName')}
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="personType"
+                                    value="legal"
+                                    checked={formData.personType === 'legal'}
+                                    onChange={(e) => setFormData({ ...formData, personType: e.target.value as 'physical' | 'legal' })}
+                                    className="mr-2"
+                                />
+                                <span>{t('auth.personTypeLegal')}</span>
                             </label>
-                            <input
-                                id="register-lastname"
-                                type="text"
-                                autoComplete="family-name"
-                                value={formData.lastName}
-                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            />
                         </div>
                     </div>
 
+                    {/* Champs conditionnels selon le type */}
+                    {formData.personType === 'physical' ? (
+                        <>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label htmlFor="register-firstname" className="block text-sm font-semibold text-primary mb-1">
+                                        {t('auth.firstName')} *
+                                    </label>
+                                    <input
+                                        id="register-firstname"
+                                        type="text"
+                                        required
+                                        autoComplete="given-name"
+                                        value={formData.firstName}
+                                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                        className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="register-lastname" className="block text-sm font-semibold text-primary mb-1">
+                                        {t('auth.lastName')} *
+                                    </label>
+                                    <input
+                                        id="register-lastname"
+                                        type="text"
+                                        required
+                                        autoComplete="family-name"
+                                        value={formData.lastName}
+                                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                        className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="register-profession" className="block text-sm font-semibold text-primary mb-1">
+                                    {t('auth.profession')}
+                                </label>
+                                <select
+                                    id="register-profession"
+                                    value={formData.profession}
+                                    onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    aria-label={t('auth.selectProfessionAria')}
+                                >
+                                    <option value="">{t('auth.selectProfession')}</option>
+                                    {professions.map((prof) => (
+                                        <option key={prof.value} value={prof.value}>
+                                            {t(`auth.${prof.translationKey}`)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    ) : (
+                        <div>
+                            <label htmlFor="register-company-name" className="block text-sm font-semibold text-primary mb-1">
+                                {t('auth.companyName')} *
+                            </label>
+                            <input
+                                id="register-company-name"
+                                type="text"
+                                required
+                                value={formData.companyName}
+                                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                                className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                            />
+                        </div>
+                    )}
+
+                    {/* Email */}
                     <div>
                         <label htmlFor="register-email" className="block text-sm font-semibold text-primary mb-1">
                             {t('auth.email')} *
@@ -141,64 +256,88 @@ export default function RegisterPage() {
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            placeholder="votre@email.com"
+                            placeholder={t('auth.emailPlaceholder')}
                             aria-required="true"
                         />
                     </div>
 
+                    {/* Téléphone - dans les deux cas */}
                     <div>
-                        <label htmlFor="register-profession" className="block text-sm font-semibold text-primary mb-1">
-                            {t('auth.profession')}
+                        <label htmlFor="register-phone" className="block text-sm font-semibold text-primary mb-1">
+                            {t('auth.phone')} *
+                        </label>
+                        <input
+                            id="register-phone"
+                            type="tel"
+                            required
+                            autoComplete="tel"
+                            value={formData.phone}
+                            onChange={(e) => {
+                                // Format phone number (remove all non-digits, then format)
+                                const digitsOnly = e.target.value.replace(/\D/g, '')
+                                let formatted = digitsOnly
+                                if (digitsOnly.length > 2) {
+                                    formatted = digitsOnly.slice(0, 2) + ' ' + digitsOnly.slice(2)
+                                }
+                                if (digitsOnly.length > 4) {
+                                    formatted = digitsOnly.slice(0, 2) + ' ' + digitsOnly.slice(2, 4) + ' ' + digitsOnly.slice(4)
+                                }
+                                if (digitsOnly.length > 6) {
+                                    formatted = digitsOnly.slice(0, 2) + ' ' + digitsOnly.slice(2, 4) + ' ' + digitsOnly.slice(4, 6) + ' ' + digitsOnly.slice(6)
+                                }
+                                if (digitsOnly.length > 8) {
+                                    formatted = digitsOnly.slice(0, 2) + ' ' + digitsOnly.slice(2, 4) + ' ' + digitsOnly.slice(4, 6) + ' ' + digitsOnly.slice(6, 8) + ' ' + digitsOnly.slice(8, 10)
+                                }
+                                setFormData({ ...formData, phone: formatted })
+                            }}
+                            className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                            placeholder={t('auth.phonePlaceholder')}
+                            aria-required="true"
+                            maxLength={14}
+                        />
+                    </div>
+
+                    {/* Pays */}
+                    <div>
+                        <label htmlFor="register-country" className="block text-sm font-semibold text-primary mb-1">
+                            {t('auth.country')} *
                         </label>
                         <select
-                            id="register-profession"
-                            value={formData.profession}
-                            onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                            id="register-country"
+                            required
+                            value={formData.country}
+                            onChange={(e) => setFormData({ ...formData, country: e.target.value as Country })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            aria-label={t('auth.selectProfessionAria')}
+                            aria-required="true"
                         >
-                            <option value="">{t('auth.selectProfession')}</option>
-                            {professions.map((prof) => (
-                                <option key={prof.value} value={prof.value}>
-                                    {t(`auth.${prof.translationKey}`)}
+                            {SUPPORTED_COUNTRIES.map((country) => (
+                                <option key={country.value} value={country.value}>
+                                    {country.label[language]}
                                 </option>
                             ))}
                         </select>
                     </div>
 
+                    {/* Identifiant professionnel (SIRET, VAT, etc.) */}
                     <div>
-                        <label htmlFor="register-siret" className="block text-sm font-semibold text-primary mb-1">
-                            {t('auth.siret')} *
+                        <label htmlFor="register-business-id" className="block text-sm font-semibold text-primary mb-1">
+                            {businessIdInfo.label} *
                         </label>
                         <input
-                            id="register-siret"
+                            id="register-business-id"
                             type="text"
                             required
-                            value={formData.siret}
-                            onChange={(e) => {
-                                // Only allow digits, remove all non-digits
-                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 14)
-                                // Format with spaces: 123 456 789 01234
-                                let formatted = digitsOnly
-                                if (digitsOnly.length > 3) {
-                                    formatted = digitsOnly.slice(0, 3) + ' ' + digitsOnly.slice(3)
-                                }
-                                if (digitsOnly.length > 6) {
-                                    formatted = digitsOnly.slice(0, 3) + ' ' + digitsOnly.slice(3, 6) + ' ' + digitsOnly.slice(6)
-                                }
-                                if (digitsOnly.length > 9) {
-                                    formatted = digitsOnly.slice(0, 3) + ' ' + digitsOnly.slice(3, 6) + ' ' + digitsOnly.slice(6, 9) + ' ' + digitsOnly.slice(9)
-                                }
-                                setFormData({ ...formData, siret: formatted })
-                            }}
+                            value={formData.businessId}
+                            onChange={(e) => setFormData({ ...formData, businessId: e.target.value })}
                             className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            placeholder={t('auth.siretPlaceholder')}
+                            placeholder={businessIdInfo.placeholder}
                             aria-required="true"
-                            aria-describedby="siret-help"
+                            aria-describedby="business-id-help"
+                            maxLength={businessIdInfo.maxLength}
                         />
-                        <div id="siret-help" className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div id="business-id-help" className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                             <p className="text-xs text-[var(--text-primary)]">
-                                <strong className="text-[var(--primary)]">⚠️ Important :</strong> {t('auth.siretNotice')}
+                                <strong className="text-[var(--primary)]">⚠️ {formData.personType === 'physical' ? businessIdInfo.noticePhysical : businessIdInfo.noticeLegal}</strong>
                             </p>
                         </div>
                     </div>
@@ -258,7 +397,6 @@ export default function RegisterPage() {
                     </p>
                 </div>
             </div>
-            <Toast message={toast.message} show={toast.show} onHide={() => setToast({ ...toast, show: false })} />
         </div>
     )
 }

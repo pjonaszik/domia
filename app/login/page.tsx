@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { Toast } from '@/components/Toast'
+import { Alert } from '@/components/Alert'
 import { LanguageSelector } from '@/components/LanguageSelector'
 
 export default function LoginPage() {
@@ -17,7 +17,6 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -30,7 +29,6 @@ export default function LoginPage() {
         } catch (err) {
             const errorMsg = err instanceof Error ? err.message : t('auth.loginError')
             setError(errorMsg)
-            setToast({ message: errorMsg, show: true })
         } finally {
             setLoading(false)
         }
@@ -45,9 +43,7 @@ export default function LoginPage() {
                 <h1 className="text-2xl font-bold text-primary mb-6 text-center">{t('auth.login')}</h1>
                 
                 {error && (
-                    <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
-                        {error}
-                    </div>
+                    <Alert message={error} type="error" onClose={() => setError('')} />
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4" aria-label={t('auth.login')}>
@@ -104,7 +100,6 @@ export default function LoginPage() {
                     </p>
                 </div>
             </div>
-            <Toast message={toast.message} show={toast.show} onHide={() => setToast({ ...toast, show: false })} />
         </div>
     )
 }

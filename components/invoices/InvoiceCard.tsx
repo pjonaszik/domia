@@ -38,7 +38,7 @@ export function InvoiceCard({ invoice, onClick }: InvoiceCardProps) {
                     {invoice.dueDate && (
                         <p className="text-sm text-secondary">
                             <i className="fas fa-clock mr-2"></i>
-                            {t('invoices.dueDateLabel')}: {formatDate(invoice.dueDate)}
+                            {t('invoices.dueDateValue', { date: formatDate(invoice.dueDate) })}
                         </p>
                     )}
                 </div>

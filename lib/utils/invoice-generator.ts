@@ -62,7 +62,7 @@ export function prepareInvoiceData(
     professional: {
         name: string;
         address: string;
-        siret?: string;
+        businessId?: string;
     };
     items: Array<{
         description: string;
@@ -105,7 +105,7 @@ export function prepareInvoiceData(
         professional: {
             name: professionalName,
             address: professionalAddress,
-            siret: user.siret || undefined,
+            businessId: user.businessId || undefined,
         },
         items: formattedItems,
         subtotal,

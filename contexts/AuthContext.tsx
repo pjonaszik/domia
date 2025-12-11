@@ -12,7 +12,7 @@ interface AuthContextType {
     loading: boolean
     error: string | null
     login: (email: string, password: string) => Promise<void>
-    register: (email: string, password: string, firstName?: string, lastName?: string, profession?: string, siret?: string) => Promise<void>
+    register: (email: string, password: string, firstName?: string, lastName?: string, profession?: string, businessId?: string, phone?: string, country?: string) => Promise<void>
     logout: () => void
     refreshUser: () => Promise<void>
     isAuthenticated: boolean
@@ -127,7 +127,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         firstName?: string,
         lastName?: string,
         profession?: string,
-        siret?: string
+        businessId?: string,
+        phone?: string,
+        country?: string
     ) => {
         try {
             setLoading(true)
@@ -136,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const response = await apiClient.publicRequest('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, firstName, lastName, profession, siret }),
+                body: JSON.stringify({ email, password, firstName, lastName, profession, businessId, phone, country }),
             })
 
             if (!response.ok) {

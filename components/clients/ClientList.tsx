@@ -7,23 +7,24 @@ import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { ClientCard } from './ClientCard'
 import { ClientForm } from './ClientForm'
+import { ConsultantSearch } from '@/components/consultants/ConsultantSearch'
 import type { Client } from '@/lib/db/schema'
+import { isCompany } from '@/lib/utils/user-type'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface ClientListProps {
     onSelectClient?: (client: Client) => void
-    onShowToast?: (message: string) => void
+    onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
+export function ClientList({ onSelectClient, onShowAlert }: ClientListProps) {
     const { t } = useLanguage()
+    const { user } = useAuth()
+    const isCompanyUser = isCompany(user)
     const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [showCreateForm, setShowCreateForm] = useState(false)
-
-    useEffect(() => {
-        loadClients()
-    }, [])
 
     const loadClients = async () => {
         try {
@@ -34,16 +35,28 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
             setClients(data.clients || [])
         } catch (error) {
             console.error('Error loading clients:', error)
-            onShowToast?.(t('clients.errorLoading'))
+            onShowAlert?.(t('clients.errorLoading'))
         } finally {
             setLoading(false)
         }
     }
 
+    useEffect(() => {
+        if (!isCompanyUser) {
+            loadClients()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isCompanyUser])
+
+    // For companies, show consultant search instead of client list
+    if (isCompanyUser) {
+        return <ConsultantSearch onShowAlert={onShowAlert} />
+    }
+
     const handleClientSaved = () => {
         setShowCreateForm(false)
         loadClients()
-        onShowToast?.(t('clients.clientCreated'))
+        onShowAlert?.(isCompanyUser ? t('clients.consultantCreated') : t('clients.clientCreated'))
     }
 
     const filteredClients = clients.filter(client => {
@@ -74,7 +87,7 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
                 <ClientForm
                     onSave={handleClientSaved}
                     onCancel={() => setShowCreateForm(false)}
-                    onShowToast={onShowToast}
+                    onShowAlert={onShowAlert}
                 />
             </div>
         )
@@ -86,7 +99,7 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
                 <div className="flex gap-2 mb-4">
                     <input
                         type="text"
-                        placeholder={t('clients.searchPlaceholder')}
+                        placeholder={isCompanyUser ? t('clients.searchConsultantPlaceholder') : t('clients.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex-1 px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
@@ -102,22 +115,31 @@ export function ClientList({ onSelectClient, onShowToast }: ClientListProps) {
                 <button
                     onClick={() => setShowCreateForm(true)}
                     className="w-full px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 mb-4"
-                    aria-label={t('clients.createClient')}
+                    aria-label={isCompanyUser ? t('clients.createConsultant') : t('clients.createClient')}
                 >
                     <i className="fas fa-plus" aria-hidden="true"></i>
-                    <span>{t('clients.newClient')}</span>
+                    <span>{isCompanyUser ? t('clients.newConsultant') : t('clients.newClient')}</span>
                 </button>
                 <div className="text-sm text-secondary mb-2">
-                    {filteredClients.length === 1 
-                        ? t('clients.clientCount', { count: '1' })
-                        : t('clients.clientCountPlural', { count: String(filteredClients.length) })}
+                    {isCompanyUser ? (
+                        filteredClients.length === 1 
+                            ? t('clients.consultantCount', { count: '1' })
+                            : t('clients.consultantCountPlural', { count: String(filteredClients.length) })
+                    ) : (
+                        filteredClients.length === 1 
+                            ? t('clients.clientCount', { count: '1' })
+                            : t('clients.clientCountPlural', { count: String(filteredClients.length) })
+                    )}
                 </div>
             </div>
 
             {filteredClients.length === 0 ? (
                 <div className="card-3d text-center py-8">
                     <p className="text-secondary">
-                        {searchTerm ? t('clients.noClientsFound') : t('clients.noClientsYet')}
+                        {isCompanyUser 
+                            ? (searchTerm ? t('clients.noConsultantsFound') : t('clients.noConsultantsYet'))
+                            : (searchTerm ? t('clients.noClientsFound') : t('clients.noClientsYet'))
+                        }
                     </p>
                 </div>
             ) : (
