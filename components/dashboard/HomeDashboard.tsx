@@ -40,7 +40,7 @@ export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardPr
             setLoading(true)
             
             // Load stats
-                const statsResponse = await apiClient.get('/dashboard/api/stats')
+                const statsResponse = await apiClient.get('/api/stats')
             if (statsResponse.ok) {
                 const statsData = await statsResponse.json()
                 setStats({
@@ -64,7 +64,7 @@ export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardPr
             const endDate = isCompanyUser ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) : tomorrow // Next 30 days for companies
             
             const appointmentsResponse = await apiClient.get(
-                `/dashboard/api/appointments?startDate=${startDate.toISOString().split('T')[0]}&endDate=${endDate.toISOString().split('T')[0]}`
+                `/api/appointments?startDate=${startDate.toISOString().split('T')[0]}&endDate=${endDate.toISOString().split('T')[0]}`
             )
             if (appointmentsResponse.ok) {
                 const appointmentsData = await appointmentsResponse.json()
@@ -99,7 +99,7 @@ export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardPr
             }
 
             // Load today's tours
-            const toursResponse = await apiClient.get('/dashboard/api/tours')
+            const toursResponse = await apiClient.get('/api/tours')
             if (toursResponse.ok) {
                 const toursData = await toursResponse.json()
                 const tours = toursData.tours || []

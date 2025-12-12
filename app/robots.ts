@@ -16,7 +16,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
         disallow: [
           '/dashboard/',      // Dashboard privé - accès authentifié requis
-          '/dashboard/api/',  // API du dashboard - privé
+          '/api/',  // API - privé
           '/api/',            // Toutes les API - privées
           '/login',           // Page de connexion - ne doit pas être indexée
           '/register',        // Page d'inscription - ne doit pas être indexée

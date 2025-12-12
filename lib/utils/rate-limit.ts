@@ -38,13 +38,17 @@ if (redis) {
     });
     
     redis.on('connect', () => {
-        console.log('✅ Redis connected successfully');
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Redis connected successfully');
+        }
     });
     
     // Try to connect (lazy connect)
     redis.connect().catch((err) => {
         console.error('⚠️ Failed to connect to Redis:', err.message);
-        console.log('ℹ️  Continuing without Redis - caching and rate limiting disabled');
+        if (process.env.NODE_ENV === 'development') {
+            console.log('ℹ️  Continuing without Redis - caching and rate limiting disabled');
+        }
     });
 }
 

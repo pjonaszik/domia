@@ -30,7 +30,7 @@ export function CalendarView({ onSelectAppointment, onShowAlert }: CalendarViewP
             setLoading(true)
             const { start, end } = getDayRange(currentDate)
             const response = await apiClient.get(
-                `/dashboard/api/appointments?startDate=${start.toISOString()}&endDate=${end.toISOString()}`
+                `/api/appointments?startDate=${start.toISOString()}&endDate=${end.toISOString()}`
             )
             if (!response.ok) throw new Error('Failed to load appointments')
             const data = await response.json()

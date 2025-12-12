@@ -30,9 +30,9 @@ export function ClientDetails({ clientId, onEdit, onShowAlert }: ClientDetailsPr
         try {
             setLoading(true)
             const [clientRes, appointmentsRes, invoicesRes] = await Promise.all([
-                apiClient.get(`/dashboard/api/clients/${clientId}`),
-                apiClient.get(`/dashboard/api/appointments?clientId=${clientId}`),
-                apiClient.get(`/dashboard/api/invoices?clientId=${clientId}`),
+                apiClient.get(`/api/clients/${clientId}`),
+                apiClient.get(`/api/appointments?clientId=${clientId}`),
+                apiClient.get(`/api/invoices?clientId=${clientId}`),
             ])
 
             if (clientRes.ok) {

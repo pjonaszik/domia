@@ -28,7 +28,7 @@ export function DashboardStats() {
     const loadStats = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get('/dashboard/api/stats')
+            const response = await apiClient.get('/api/stats')
             if (!response.ok) throw new Error('Failed to load stats')
             const data = await response.json()
             setStats(data.stats)

@@ -19,7 +19,7 @@ export function DashboardHeader({ onNavigateToAccount, onNavigateToOffers }: Das
     useEffect(() => {
         const fetchUnreadCount = async () => {
             try {
-                const response = await apiClient.get('/dashboard/api/offers/unread-count')
+                const response = await apiClient.get('/api/offers/unread-count')
                 if (response.ok) {
                     const data = await response.json()
                     setUnreadCount(data.count || 0)

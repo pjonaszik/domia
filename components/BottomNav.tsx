@@ -9,7 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import type { User } from '@/lib/db/schema'
 import { isCompany } from '@/lib/utils/user-type'
 
-type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'offers'
+type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'offers' | 'pools'
 
 interface BottomNavProps {
     currentPage: Page
@@ -28,13 +28,13 @@ export function BottomNav({ currentPage, onPageChange, userId, user }: BottomNav
             if (!userId) return
             
             try {
-                    const response = await apiClient.get('/dashboard/api/admin/check')
+                const response = await apiClient.get('/api/admin/check')
                 if (response.ok) {
                     const data = await response.json()
                     setIsAdmin(data.isAdmin || false)
                 }
             } catch (error) {
-                // User is not an admin, which is fine
+                // User is not an admin, which is fine - ignore 401 errors
                 setIsAdmin(false)
             }
         }
@@ -48,6 +48,11 @@ export function BottomNav({ currentPage, onPageChange, userId, user }: BottomNav
         { id: 'clients', label: (isCompanyUser ? t('nav.consultants') : t('nav.clients')).toUpperCase(), icon: 'fa-users' },
         { id: 'stats', label: t('nav.stats').toUpperCase(), icon: 'fa-chart-bar' },
     ]
+
+    // Add pools only for companies
+    if (isCompanyUser) {
+        baseItems.splice(2, 0, { id: 'pools', label: t('nav.pools').toUpperCase(), icon: 'fa-layer-group' })
+    }
 
     // Add tours only for workers (not companies)
     if (!isCompanyUser) {

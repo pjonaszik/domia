@@ -27,7 +27,7 @@ export function InvoiceList({ clientId, onSelectInvoice, onShowAlert }: InvoiceL
     const loadInvoices = async () => {
         try {
             setLoading(true)
-                let url = '/dashboard/api/invoices'
+                let url = '/api/invoices'
             if (clientId) url += `?clientId=${clientId}`
             if (statusFilter !== 'all') url += `${clientId ? '&' : '?'}status=${statusFilter}`
 

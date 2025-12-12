@@ -26,7 +26,7 @@ export function InvoicePreview({ invoiceId, onShowAlert }: InvoicePreviewProps) 
     const loadInvoice = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get(`/dashboard/api/invoices/${invoiceId}`)
+            const response = await apiClient.get(`/api/invoices/${invoiceId}`)
             if (!response.ok) throw new Error('Failed to load invoice')
             const data = await response.json()
             setInvoice(data.invoice)

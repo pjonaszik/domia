@@ -29,7 +29,7 @@ export function ClientList({ onSelectClient, onShowAlert }: ClientListProps) {
     const loadClients = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get('/dashboard/api/clients')
+            const response = await apiClient.get('/api/clients')
             if (!response.ok) throw new Error('Failed to load clients')
             const data = await response.json()
             setClients(data.clients || [])

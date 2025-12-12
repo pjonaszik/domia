@@ -75,7 +75,9 @@ export async function logSecurityEvent(
                 console.warn(`[SECURITY] ${logMessage}`)
                 break
             default:
-                console.log(`[SECURITY] ${logMessage}`)
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`[SECURITY] ${logMessage}`)
+                }
         }
 
         // In production, you might want to send to external logging service
@@ -129,7 +131,9 @@ export function logApplicationEvent(
                 console.warn(`[APP] ${logMessage}`)
                 break
             case 'info':
-                console.log(`[APP] ${logMessage}`)
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`[APP] ${logMessage}`)
+                }
                 break
             case 'debug':
                 if (process.env.NODE_ENV === 'development') {

@@ -55,7 +55,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowAlert }
 
     const loadClients = async () => {
         try {
-            const response = await apiClient.get('/dashboard/api/clients')
+            const response = await apiClient.get('/api/clients')
             if (response.ok) {
                 const data = await response.json()
                 setClients(data.clients || [])
@@ -67,7 +67,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowAlert }
 
     const loadClientAppointments = async () => {
         try {
-            const response = await apiClient.get(`/dashboard/api/appointments?clientId=${formData.clientId}`)
+            const response = await apiClient.get(`/api/appointments?clientId=${formData.clientId}`)
             if (response.ok) {
                 const data = await response.json()
                 setAppointments(data.appointments || [])
@@ -80,7 +80,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowAlert }
     const loadInvoiceItems = async () => {
         if (!invoice) return
         try {
-            const response = await apiClient.get(`/dashboard/api/invoices/${invoice.id}`)
+            const response = await apiClient.get(`/api/invoices/${invoice.id}`)
             if (response.ok) {
                 const data = await response.json()
                 if (data.items) {
@@ -156,7 +156,7 @@ export function InvoiceForm({ invoice, clientId, onSave, onCancel, onShowAlert }
                 })),
             }
 
-            const url = invoice ? `/dashboard/api/invoices/${invoice.id}` : '/dashboard/api/invoices'
+            const url = invoice ? `/api/invoices/${invoice.id}` : '/api/invoices'
 
             const response = invoice 
                 ? await apiClient.put(url, payload)

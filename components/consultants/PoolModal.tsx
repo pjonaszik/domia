@@ -34,6 +34,11 @@ export function PoolModal({ consultant, onClose, onConsultantAdded, onShowAlert 
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [addingToPool, setAddingToPool] = useState<string | null>(null)
+    const [showCreateForm, setShowCreateForm] = useState(false)
+    const [newPoolName, setNewPoolName] = useState('')
+    const [newPoolColor, setNewPoolColor] = useState('')
+    const [newPoolDescription, setNewPoolDescription] = useState('')
+    const [creatingPool, setCreatingPool] = useState(false)
 
     useEffect(() => {
         loadPools()
@@ -42,7 +47,7 @@ export function PoolModal({ consultant, onClose, onConsultantAdded, onShowAlert 
     const loadPools = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get('/dashboard/api/pools')
+            const response = await apiClient.get('/api/pools')
             if (!response.ok) throw new Error('Failed to load pools')
             const data = await response.json()
             setPools(data.pools || [])
@@ -57,7 +62,7 @@ export function PoolModal({ consultant, onClose, onConsultantAdded, onShowAlert 
     const handleAddToPool = async (poolId: string) => {
         try {
             setAddingToPool(poolId)
-            const response = await apiClient.post(`/dashboard/api/pools/${poolId}/add-consultant`, {
+            const response = await apiClient.post(`/api/pools/${poolId}/add-consultant`, {
                 consultantId: consultant.id,
             })
             if (!response.ok) {
@@ -71,6 +76,42 @@ export function PoolModal({ consultant, onClose, onConsultantAdded, onShowAlert 
             onShowAlert?.(errorMsg, 'error')
         } finally {
             setAddingToPool(null)
+        }
+    }
+
+    const handleCreatePool = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!newPoolName.trim()) {
+            onShowAlert?.(t('pools.nameRequired'), 'error')
+            return
+        }
+
+        try {
+            setCreatingPool(true)
+            const response = await apiClient.post('/api/pools', {
+                name: newPoolName.trim(),
+                color: newPoolColor.trim() || null,
+                description: newPoolDescription.trim() || null,
+            })
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.error || 'Failed to create pool')
+            }
+            const data = await response.json()
+            // Add the new pool to the list
+            setPools([...pools, { ...data.pool, memberCount: 0 }])
+            // Reset form
+            setNewPoolName('')
+            setNewPoolColor('')
+            setNewPoolDescription('')
+            setShowCreateForm(false)
+            onShowAlert?.(t('pools.poolCreated'), 'success')
+        } catch (error) {
+            console.error('Error creating pool:', error)
+            const errorMsg = error instanceof Error ? error.message : t('pools.errorSaving')
+            onShowAlert?.(errorMsg, 'error')
+        } finally {
+            setCreatingPool(false)
         }
     }
 
@@ -160,6 +201,91 @@ export function PoolModal({ consultant, onClose, onConsultantAdded, onShowAlert 
                         ))}
                     </div>
                 )}
+
+                {/* Create Pool Form */}
+                {showCreateForm && (
+                    <div className="mt-4 p-4 border-2 border-[var(--primary)] rounded-lg">
+                        <h3 className="font-semibold text-primary mb-3">{t('pools.newPool')}</h3>
+                        <form onSubmit={handleCreatePool} className="space-y-3">
+                            <div>
+                                <label className="block text-sm font-semibold text-primary mb-1">
+                                    {t('pools.name')} *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newPoolName}
+                                    onChange={(e) => setNewPoolName(e.target.value)}
+                                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder={t('pools.name')}
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-primary mb-1">
+                                    {t('pools.color')}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newPoolColor}
+                                    onChange={(e) => setNewPoolColor(e.target.value)}
+                                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder="#FF5733 ou red"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-primary mb-1">
+                                    {t('pools.description')}
+                                </label>
+                                <textarea
+                                    value={newPoolDescription}
+                                    onChange={(e) => setNewPoolDescription(e.target.value)}
+                                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    rows={3}
+                                    placeholder={t('pools.description')}
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    type="submit"
+                                    disabled={creatingPool}
+                                    className="flex-1 btn-primary disabled:opacity-50"
+                                >
+                                    {creatingPool ? t('common.loading') : t('pools.createPool')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowCreateForm(false)
+                                        setNewPoolName('')
+                                        setNewPoolColor('')
+                                        setNewPoolDescription('')
+                                    }}
+                                    className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                    {t('common.cancel')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                {/* Footer with Create Pool button */}
+                <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-200">
+                    <button
+                        onClick={() => setShowCreateForm(!showCreateForm)}
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-primary transition-colors flex items-center gap-2"
+                    >
+                        <i className="fas fa-plus" aria-hidden="true"></i>
+                        {t('pools.newPool')}
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                    >
+                        {t('common.close')}
+                    </button>
+                </div>
             </div>
         </div>
     )

@@ -60,7 +60,7 @@ export default function AccountPage() {
     const loadSettings = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get('/dashboard/api/settings')
+            const response = await apiClient.get('/api/settings')
             if (response.ok) {
                 const data = await response.json()
                 const userSettings = data.settings
@@ -91,7 +91,7 @@ export default function AccountPage() {
     const handleSaveSettings = async () => {
         try {
             setSaving(true)
-            const response = await apiClient.put('/dashboard/api/settings', {
+            const response = await apiClient.put('/api/settings', {
                 emailNotifications,
                 smsNotifications,
                 reminderBeforeAppointment,

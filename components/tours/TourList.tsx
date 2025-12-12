@@ -25,7 +25,7 @@ export function TourList({ onSelectTour, onShowAlert }: TourListProps) {
     const loadTours = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get('/dashboard/api/tours')
+            const response = await apiClient.get('/api/tours')
             if (!response.ok) throw new Error('Failed to load tours')
             const data = await response.json()
             setTours(data.tours || [])

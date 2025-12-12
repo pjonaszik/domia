@@ -15,8 +15,9 @@ import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { HomeDashboard } from '@/components/dashboard/HomeDashboard'
 import AccountPage from './account/page'
 import OffersPage from './offers/page'
+import { PoolList } from '@/components/pools/PoolList'
 
-type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'offers'
+type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'offers' | 'pools'
 
 export default function DashboardPage() {
   const { user, loading: authLoading, error: authError } = useAuth()
@@ -116,6 +117,11 @@ export default function DashboardPage() {
         {currentPage === 'offers' && (
           <div className="px-5 pt-5">
             <OffersPage onShowAlert={showAlert} />
+          </div>
+        )}
+        {currentPage === 'pools' && (
+          <div className="px-5 pt-5">
+            <PoolList onShowAlert={showAlert} />
           </div>
         )}
       </main>

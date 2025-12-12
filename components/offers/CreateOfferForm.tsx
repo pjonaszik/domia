@@ -71,7 +71,7 @@ export function CreateOfferForm({ worker, onClose }: CreateOfferFormProps) {
 
         try {
             setLoading(true)
-            const response = await apiClient.post('/dashboard/api/offers', {
+            const response = await apiClient.post('/api/offers', {
                 workerId: worker.id,
                 title,
                 description: description || null,

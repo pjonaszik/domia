@@ -44,7 +44,9 @@ export function ConsultantSearch({ onShowAlert }: ConsultantSearchProps) {
         try {
             setLoading(true)
             setHasSearched(true)
-            const response = await apiClient.get(`/dashboard/api/consultants/search?q=${encodeURIComponent(query)}`)
+            const url = `/api/consultants/search?q=${encodeURIComponent(query)}`
+            
+            const response = await apiClient.get(url)
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Failed to search consultants' }))
@@ -54,7 +56,6 @@ export function ConsultantSearch({ onShowAlert }: ConsultantSearchProps) {
             const data = await response.json()
             setConsultants(data.consultants || [])
         } catch (error) {
-            console.error('Error searching consultants:', error)
             const errorMsg = error instanceof Error ? error.message : t('consultants.errorSearching')
             onShowAlert?.(errorMsg, 'error')
             setConsultants([])
@@ -64,6 +65,10 @@ export function ConsultantSearch({ onShowAlert }: ConsultantSearchProps) {
     }
 
     const handleSearch = () => {
+        if (!searchTerm || searchTerm.trim().length < 2) {
+            onShowAlert?.(t('consultants.searchHint'), 'info')
+            return
+        }
         searchConsultants(searchTerm)
     }
 

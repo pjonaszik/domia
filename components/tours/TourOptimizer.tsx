@@ -32,7 +32,7 @@ export function TourOptimizer({ appointments, onOptimized, onShowAlert }: TourOp
             setLoading(true)
             const appointmentIds = appointments.map(apt => apt.id)
 
-            const response = await apiClient.post('/dashboard/api/tours/optimize', {
+            const response = await apiClient.post('/api/tours/optimize', {
                 appointmentIds,
             })
 

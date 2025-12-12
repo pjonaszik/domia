@@ -41,7 +41,7 @@ export default function WorkersPage() {
             if (city) params.append('city', city)
             if (postalCode) params.append('postalCode', postalCode)
 
-            const response = await apiClient.get(`/dashboard/api/workers/search?${params.toString()}`)
+            const response = await apiClient.get(`/api/workers/search?${params.toString()}`)
             
             if (response.ok) {
                 const data = await response.json()

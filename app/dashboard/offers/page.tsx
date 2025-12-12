@@ -61,7 +61,7 @@ export default function OffersPage({ onShowAlert }: OffersPageProps) {
         try {
             setLoading(true)
             const statusParam = filter !== 'all' ? `?status=${filter}` : ''
-            const response = await apiClient.get(`/dashboard/api/offers${statusParam}`)
+            const response = await apiClient.get(`/api/offers${statusParam}`)
             
             if (response.ok) {
                 const data = await response.json()

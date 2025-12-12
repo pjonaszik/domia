@@ -63,7 +63,7 @@ export function OfferModal({ offer, onClose, onShowAlert }: OfferModalProps) {
     const handleAccept = async () => {
         try {
             setProcessing(true)
-            const response = await apiClient.post(`/dashboard/api/offers/${offer.offer.id}/accept`)
+            const response = await apiClient.post(`/api/offers/${offer.offer.id}/accept`)
 
             if (response.ok) {
                 onShowAlert?.(t('offers.acceptedSuccess'), 'success')
@@ -83,7 +83,7 @@ export function OfferModal({ offer, onClose, onShowAlert }: OfferModalProps) {
     const handleDecline = async () => {
         try {
             setProcessing(true)
-            const response = await apiClient.post(`/dashboard/api/offers/${offer.offer.id}/decline`)
+            const response = await apiClient.post(`/api/offers/${offer.offer.id}/decline`)
 
             if (response.ok) {
                 onShowAlert?.(t('offers.declinedSuccess'), 'success')
