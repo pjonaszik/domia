@@ -48,6 +48,39 @@ export async function POST(
             );
         }
 
+        // Vérifier qu'il reste des postes disponibles pour cette mission
+        // Toutes les offres de la même mission ont le même numberOfPositions
+        // On compte combien d'offres de cette mission ont déjà été acceptées
+        const missionOffers = await db
+            .select()
+            .from(jobOffers)
+            .where(
+                and(
+                    eq(jobOffers.clientId, offer.clientId),
+                    eq(jobOffers.title, offer.title),
+                    eq(jobOffers.startDate, offer.startDate),
+                    eq(jobOffers.endDate, offer.endDate),
+                    eq(jobOffers.address, offer.address)
+                )
+            );
+
+        // Count offers that are accepted, in_progress, or completed (any status except pending/declined/expired)
+        const acceptedCount = missionOffers.filter(o => 
+            o.status === 'accepted' || 
+            o.status === 'in_progress' || 
+            o.status === 'completed_pending_validation' || 
+            o.status === 'needs_correction' || 
+            o.status === 'completed_validated'
+        ).length;
+        const numberOfPositions = offer.numberOfPositions || 1;
+
+        if (acceptedCount >= numberOfPositions) {
+            return NextResponse.json(
+                { error: 'All positions for this mission have been filled' },
+                { status: 400 }
+            );
+        }
+
         // Vérifier que les dates ne sont pas passées
         if (new Date(offer.endDate) < new Date()) {
             return NextResponse.json(

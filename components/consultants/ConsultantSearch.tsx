@@ -19,6 +19,7 @@ interface Consultant {
     agrementNumber: string | null
     city: string | null
     postalCode: string | null
+    hourlyRate: string | null
     isInPool: boolean
 }
 
@@ -175,6 +176,11 @@ export function ConsultantSearch({ onShowAlert }: ConsultantSearchProps) {
                                             {tag.label}
                                         </span>
                                     ))}
+                                    {consultant.hourlyRate && (
+                                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">
+                                            {consultant.hourlyRate} €/h
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             {!consultant.isInPool && (

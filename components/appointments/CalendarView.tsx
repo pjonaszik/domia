@@ -7,19 +7,25 @@ import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { AppointmentCard } from './AppointmentCard'
 import { formatDate, getDayRange, addDaysToDate, isSameDate } from '@/lib/utils/date-helpers'
+import { MissionList } from '@/components/missions/MissionList'
+import { isCompany } from '@/lib/utils/user-type'
 import type { Appointment } from '@/lib/db/schema'
+import type { User } from '@/lib/db/schema'
 
 interface CalendarViewProps {
+    user?: User | null
     onSelectAppointment?: (appointment: Appointment) => void
     onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
 }
 
-export function CalendarView({ onSelectAppointment, onShowAlert }: CalendarViewProps) {
+export function CalendarView({ user, onSelectAppointment, onShowAlert }: CalendarViewProps) {
     const { t } = useLanguage()
+    const isCompanyUser = isCompany(user)
     const [currentDate, setCurrentDate] = useState(new Date())
     const [appointments, setAppointments] = useState<Appointment[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+    const [refreshKey, setRefreshKey] = useState(0)
 
     useEffect(() => {
         loadAppointments()
@@ -64,6 +70,21 @@ export function CalendarView({ onSelectAppointment, onShowAlert }: CalendarViewP
         return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     })
 
+    const handleMissionCreated = () => {
+        // Trigger refresh of MissionList
+        setRefreshKey(prev => prev + 1)
+    }
+
+    // For companies, show mission list instead of calendar
+    if (isCompanyUser) {
+        return (
+            <div className="space-y-4">
+                <MissionList key={refreshKey} onShowAlert={onShowAlert} />
+            </div>
+        )
+    }
+
+    // For workers, show calendar view
     return (
         <div className="space-y-4">
             <div className="card-3d">

@@ -44,23 +44,24 @@ export async function GET(
             return NextResponse.json({ error: 'Pool not found' }, { status: 404 });
         }
 
-        // Get all consultants in this pool
-        const poolMembers = await db
-            .select({
-                id: users.id,
-                firstName: users.firstName,
-                lastName: users.lastName,
-                email: users.email,
-                phone: users.phone,
-                profession: users.profession,
-                adeliNumber: users.adeliNumber,
-                agrementNumber: users.agrementNumber,
-                city: users.city,
-                postalCode: users.postalCode,
-            })
-            .from(consultantPoolMembers)
-            .innerJoin(users, eq(consultantPoolMembers.consultantId, users.id))
-            .where(eq(consultantPoolMembers.poolId, poolId));
+            // Get all consultants in this pool
+            const poolMembers = await db
+                .select({
+                    id: users.id,
+                    firstName: users.firstName,
+                    lastName: users.lastName,
+                    email: users.email,
+                    phone: users.phone,
+                    profession: users.profession,
+                    adeliNumber: users.adeliNumber,
+                    agrementNumber: users.agrementNumber,
+                    city: users.city,
+                    postalCode: users.postalCode,
+                    hourlyRate: users.hourlyRate,
+                })
+                .from(consultantPoolMembers)
+                .innerJoin(users, eq(consultantPoolMembers.consultantId, users.id))
+                .where(eq(consultantPoolMembers.poolId, poolId));
 
         return NextResponse.json({ consultants: poolMembers });
     } catch (error) {

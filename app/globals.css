@@ -47,6 +47,15 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
   /* Global rule to prevent horizontal overflow - applied to all elements */
   * {
     max-width: 100%;

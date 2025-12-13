@@ -20,12 +20,10 @@ interface Settings {
     defaultServiceDuration: number | null
     workingHours: any
     currency: string
-    taxRate: string
     preferences: {
         sepaPayment?: {
             iban?: string | null
             bic?: string | null
-            accountHolder?: string | null
         }
     } | null
     createdAt: string
@@ -48,10 +46,10 @@ export default function AccountPage() {
     const [reminderBeforeAppointment, setReminderBeforeAppointment] = useState(30)
     const [defaultServiceDuration, setDefaultServiceDuration] = useState(60)
     const [currency, setCurrency] = useState('EUR')
-    const [taxRate, setTaxRate] = useState('0.00')
     const [sepaIban, setSepaIban] = useState('')
     const [sepaBic, setSepaBic] = useState('')
     const [sepaAccountHolder, setSepaAccountHolder] = useState('')
+    const [hourlyRate, setHourlyRate] = useState('')
 
     useEffect(() => {
         loadSettings()
@@ -72,13 +70,18 @@ export default function AccountPage() {
                 setReminderBeforeAppointment(userSettings.reminderBeforeAppointment ?? 30)
                 setDefaultServiceDuration(userSettings.defaultServiceDuration ?? 60)
                 setCurrency(userSettings.currency || 'EUR')
-                setTaxRate(userSettings.taxRate || '0.00')
                 
                 // SEPA payment info
                 const sepaPayment = userSettings.preferences?.sepaPayment
                 setSepaIban(sepaPayment?.iban || '')
                 setSepaBic(sepaPayment?.bic || '')
-                setSepaAccountHolder(sepaPayment?.accountHolder || '')
+                
+                // Get user hourly rate
+                const userResponse = await apiClient.get('/api/users/me')
+                if (userResponse.ok) {
+                    const userData = await userResponse.json()
+                    setHourlyRate(userData.user?.hourlyRate || '')
+                }
             }
         } catch (error) {
             console.error('Error loading settings:', error)
@@ -97,10 +100,26 @@ export default function AccountPage() {
                 reminderBeforeAppointment,
                 defaultServiceDuration,
                 currency,
-                taxRate,
                 sepaIban: sepaIban.trim() || null,
                 sepaBic: sepaBic.trim() || null,
-                sepaAccountHolder: sepaAccountHolder.trim() || null,
+            })
+
+            // Update hourly rate separately (it's in users table, not settings)
+            if (!hourlyRate || hourlyRate.trim() === '') {
+                setAlert({ message: t('settings.hourlyRateRequired'), type: 'error' })
+                setSaving(false)
+                return
+            }
+            
+            const hourlyRateNum = parseFloat(hourlyRate)
+            if (isNaN(hourlyRateNum) || hourlyRateNum < 0) {
+                setAlert({ message: t('settings.hourlyRateInvalid'), type: 'error' })
+                setSaving(false)
+                return
+            }
+            
+            await apiClient.put('/api/users/hourly-rate', {
+                hourlyRate: hourlyRateNum.toFixed(2),
             })
 
             if (response.ok) {
@@ -301,18 +320,25 @@ export default function AccountPage() {
 
                             <div>
                                 <label className="block text-sm font-semibold text-primary mb-1">
-                                    {t('settings.taxRate')}
+                                    {t('settings.hourlyRate')} *
                                 </label>
                                 <input
                                     type="number"
                                     step="0.01"
-                                    value={taxRate}
-                                    onChange={(e) => setTaxRate(e.target.value)}
-                                    className="w-full px-3 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                                     min="0"
-                                    max="100"
+                                    required
+                                    value={hourlyRate}
+                                    onChange={(e) => {
+                                        const value = e.target.value
+                                        // Allow up to 2 decimal places
+                                        if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                                            setHourlyRate(value)
+                                        }
+                                    }}
+                                    className="w-full px-3 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder={t('settings.hourlyRatePlaceholder')}
                                 />
-                                <p className="text-xs text-secondary mt-1">{t('settings.taxRatePercent')}</p>
+                                <p className="text-xs text-secondary mt-1">{t('settings.hourlyRateHint')}</p>
                             </div>
                         </div>
 
@@ -349,18 +375,6 @@ export default function AccountPage() {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-primary mb-1">
-                                    {t('settings.accountHolder')} *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={sepaAccountHolder}
-                                    onChange={(e) => setSepaAccountHolder(e.target.value)}
-                                    placeholder={t('settings.accountHolderPlaceholder')}
-                                    className="w-full px-3 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                />
-                            </div>
                         </div>
 
                         {/* Action Buttons */}
@@ -407,9 +421,11 @@ export default function AccountPage() {
                             <p className="text-sm text-secondary">
                                 {t('settings.currencyValue', { currency: settings?.currency || 'EUR' })}
                             </p>
-                            <p className="text-sm text-secondary">
-                                {t('settings.taxRateValue', { rate: settings?.taxRate || '0.00' })}
-                            </p>
+                            {user?.hourlyRate && (
+                                <p className="text-sm text-secondary">
+                                    {t('settings.hourlyRateValue', { rate: user.hourlyRate })}
+                                </p>
+                            )}
                         </div>
 
                         <div className="space-y-3 pt-4 border-t-2 border-[var(--primary)]">
@@ -422,11 +438,6 @@ export default function AccountPage() {
                                     {settings.preferences.sepaPayment.bic && (
                                         <p className="text-sm text-secondary">
                                             {t('settings.bicValue', { bic: settings.preferences.sepaPayment.bic })}
-                                        </p>
-                                    )}
-                                    {settings.preferences.sepaPayment.accountHolder && (
-                                        <p className="text-sm text-secondary">
-                                            {t('settings.accountHolderValue', { holder: settings.preferences.sepaPayment.accountHolder })}
                                         </p>
                                     )}
                                 </>

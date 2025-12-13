@@ -49,7 +49,7 @@ export function TourList({ onSelectTour, onShowAlert }: TourListProps) {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-6">
             {tours.length === 0 ? (
                 <div className="card-3d text-center py-8">
                     <p className="text-secondary">{t('tours.noToursYet')}</p>

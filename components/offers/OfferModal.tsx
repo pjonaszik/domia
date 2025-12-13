@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { apiClient } from '@/lib/utils/api-client'
+import { CompleteMissionModal } from './CompleteMissionModal'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Offer {
@@ -22,7 +23,7 @@ interface Offer {
     serviceType: string | null
     compensation: string | null
     notes: string | null
-    status: 'pending' | 'accepted' | 'declined' | 'expired'
+    status: 'pending' | 'accepted' | 'declined' | 'expired' | 'in_progress' | 'completed_pending_validation' | 'needs_correction' | 'completed_validated'
     respondedAt: string | null
     createdAt: string
     updatedAt: string
@@ -48,6 +49,7 @@ interface OfferModalProps {
 export function OfferModal({ offer, onClose, onShowAlert }: OfferModalProps) {
     const { t } = useLanguage()
     const [processing, setProcessing] = useState(false)
+    const [showCompleteModal, setShowCompleteModal] = useState(false)
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString)
@@ -101,12 +103,12 @@ export function OfferModal({ offer, onClose, onShowAlert }: OfferModalProps) {
     }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto card-3d">
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                     {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
-                        <h2 className="text-2xl font-bold text-primary">{offer.offer.title}</h2>
+                    <div className="flex items-start justify-between mb-4 gap-2">
+                        <h2 className="text-lg sm:text-2xl font-bold text-primary break-words flex-1">{offer.offer.title}</h2>
                         <button
                             onClick={onClose}
                             className="text-secondary hover:text-primary transition-colors"
@@ -216,7 +218,62 @@ export function OfferModal({ offer, onClose, onShowAlert }: OfferModalProps) {
                         </div>
                     )}
 
-                    {offer.offer.status !== 'pending' && (
+                    {offer.offer.status === 'in_progress' && (
+                        <div className="flex gap-3 mt-6 pt-4 border-t-2 border-[var(--primary)]">
+                            <button
+                                onClick={() => setShowCompleteModal(true)}
+                                className="flex-1 px-4 py-3 bg-[var(--primary)] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                            >
+                                <i className="fas fa-check-circle" aria-hidden="true"></i>
+                                <span>{t('missions.completeMission')}</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {offer.offer.status === 'completed_pending_validation' && (
+                        <div className="mt-6 pt-4 border-t-2 border-[var(--primary)]">
+                            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+                                <p className="text-center text-yellow-800 font-semibold">
+                                    <i className="fas fa-clock mr-2" aria-hidden="true"></i>
+                                    {t('missions.pendingValidation')}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {offer.offer.status === 'needs_correction' && (
+                        <div className="mt-6 pt-4 border-t-2 border-[var(--primary)]">
+                            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-4">
+                                <p className="text-center text-red-800 font-semibold mb-2">
+                                    <i className="fas fa-exclamation-triangle mr-2" aria-hidden="true"></i>
+                                    {t('missions.needsCorrection')}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowCompleteModal(true)}
+                                className="w-full px-4 py-3 bg-[var(--primary)] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                            >
+                                <i className="fas fa-edit" aria-hidden="true"></i>
+                                <span>{t('missions.completeMission')}</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {offer.offer.status === 'completed_validated' && (
+                        <div className="mt-6 pt-4 border-t-2 border-[var(--primary)]">
+                            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                                <p className="text-center text-green-800 font-semibold">
+                                    <i className="fas fa-check-circle mr-2" aria-hidden="true"></i>
+                                    {t('missions.validated')}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {offer.offer.status !== 'pending' && offer.offer.status !== 'in_progress' && 
+                     offer.offer.status !== 'completed_pending_validation' && 
+                     offer.offer.status !== 'needs_correction' && 
+                     offer.offer.status !== 'completed_validated' && (
                         <div className="mt-6 pt-4 border-t-2 border-[var(--primary)]">
                             <p className="text-center text-secondary">
                                 {offer.offer.status === 'accepted' && t('offers.alreadyAccepted')}
@@ -227,6 +284,16 @@ export function OfferModal({ offer, onClose, onShowAlert }: OfferModalProps) {
                     )}
                 </div>
             </div>
+            {showCompleteModal && (
+                <CompleteMissionModal
+                    offerId={offer.offer.id}
+                    onClose={() => {
+                        setShowCompleteModal(false)
+                        onClose()
+                    }}
+                    onShowAlert={onShowAlert}
+                />
+            )}
         </div>
     )
 }

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { clientId, serviceId, tourId, startTime, endTime, duration, serviceName, notes, price } = body;
+        const { clientId, tourId, startTime, endTime, duration, serviceName, notes, price } = body;
 
         if (!clientId || !startTime || !endTime) {
             return NextResponse.json(
@@ -92,7 +92,6 @@ export async function POST(req: NextRequest) {
             .values({
                 userId: auth.user!.id,
                 clientId,
-                serviceId: serviceId || null,
                 tourId: tourId || null,
                 startTime: new Date(startTime),
                 endTime: new Date(endTime),

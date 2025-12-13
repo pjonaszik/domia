@@ -79,7 +79,7 @@ export default function DashboardPage() {
         <div className="floating-shape rounded-full" style={{ top: '60%', right: '10%', width: '80px', height: '80px', background: 'var(--primary)', animationDelay: '6s', opacity: 0.05 }} aria-hidden="true" />
       </div>
 
-      <main id="main-content" className="container mx-auto max-w-md pb-20 relative w-full max-w-full overflow-x-clip" style={{ maxWidth: '100vw', width: '100%', overflowX: 'clip', paddingTop: 'calc(70px + env(safe-area-inset-top))' }}>
+      <main id="main-content" className="container mx-auto max-w-md pb-24 sm:pb-28 relative w-full max-w-full overflow-x-clip" style={{ maxWidth: '100vw', width: '100%', overflowX: 'clip', paddingTop: 'calc(70px + env(safe-area-inset-top))', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         {currentPage === 'home' && (
           <div className="px-5 pt-5">
             <HomeDashboard 
@@ -101,7 +101,7 @@ export default function DashboardPage() {
         )}
         {currentPage === 'calendar' && (
           <div className="px-5 pt-5">
-            <CalendarView onShowAlert={showAlert} />
+            <CalendarView user={user} onShowAlert={showAlert} />
           </div>
         )}
         {currentPage === 'stats' && (

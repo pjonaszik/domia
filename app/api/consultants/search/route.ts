@@ -75,6 +75,7 @@ export async function GET(req: NextRequest) {
                 agrementNumber: users.agrementNumber,
                 city: users.city,
                 postalCode: users.postalCode,
+                hourlyRate: users.hourlyRate,
             })
             .from(users)
             .where(and(...conditions))

@@ -60,7 +60,6 @@ export async function PUT(req: NextRequest) {
             preferences,
             sepaIban,
             sepaBic,
-            sepaAccountHolder,
         } = body;
 
         // Check if settings exist
@@ -105,14 +104,13 @@ export async function PUT(req: NextRequest) {
         if (preferences !== undefined) updateData.preferences = preferences;
 
         // Handle SEPA payment info in preferences
-        if (sepaIban !== undefined || sepaBic !== undefined || sepaAccountHolder !== undefined) {
+        if (sepaIban !== undefined || sepaBic !== undefined) {
             const currentPreferences = existingSettings.preferences as any || {};
             updateData.preferences = {
                 ...currentPreferences,
                 sepaPayment: {
                     iban: sepaIban !== undefined ? sepaIban : currentPreferences.sepaPayment?.iban || null,
                     bic: sepaBic !== undefined ? sepaBic : currentPreferences.sepaPayment?.bic || null,
-                    accountHolder: sepaAccountHolder !== undefined ? sepaAccountHolder : currentPreferences.sepaPayment?.accountHolder || null,
                 },
             };
         }

@@ -34,6 +34,7 @@ export const users = pgTable('users', {
     // Settings
     timezone: varchar('timezone', { length: 50 }).default('Europe/Paris'),
     language: varchar('language', { length: 10 }).default('fr'),
+    hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }), // Taux horaire du consultant (en euros)
 
     // Timestamps
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -125,34 +126,11 @@ export const clients = pgTable('clients', {
     index('client_name_idx').on(table.firstName, table.lastName), // For name searches
 ]);
 
-// Services table - Types of services offered
-export const services = pgTable('services', {
-    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-    
-    name: varchar('name', { length: 255 }).notNull(),
-    description: text('description'),
-    duration: integer('duration').notNull(), // Duration in minutes
-    price: decimal('price', { precision: 10, scale: 2 }).notNull(), // Price per service
-    category: varchar('category', { length: 100 }), // 'soins', 'entretien', 'garde', etc.
-    
-    isActive: boolean('is_active').default(true).notNull(),
-    
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (table) => [
-    index('service_user_idx').on(table.userId),
-    index('service_active_idx').on(table.isActive),
-    index('service_user_active_idx').on(table.userId, table.isActive), // Composite for filtered service lists
-    index('service_category_idx').on(table.category), // For category filtering
-]);
-
 // Appointments table - Rendez-vous/Visites
 export const appointments = pgTable('appointments', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
     userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     clientId: varchar('client_id', { length: 128 }).notNull().references(() => clients.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-    serviceId: varchar('service_id', { length: 128 }).references(() => services.id, { onDelete: 'set null', onUpdate: 'cascade' }), // Optional service reference
     tourId: varchar('tour_id', { length: 128 }).references(() => tours.id, { onDelete: 'set null', onUpdate: 'cascade' }), // Optional tour reference
     
     // Scheduling
@@ -275,29 +253,6 @@ export const invoiceItems = pgTable('invoice_items', {
     index('invoice_item_appointment_idx').on(table.appointmentId),
 ]);
 
-// Documents table
-export const documents = pgTable('documents', {
-    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-    clientId: varchar('client_id', { length: 128 }).references(() => clients.id, { onDelete: 'cascade', onUpdate: 'cascade' }), // Optional - can be general document
-    
-    name: varchar('name', { length: 255 }).notNull(),
-    type: varchar('type', { length: 100 }), // 'contract', 'note', 'certificate', 'prescription', etc.
-    fileUrl: text('file_url').notNull(), // URL to stored file
-    fileSize: integer('file_size'), // Size in bytes
-    mimeType: varchar('mime_type', { length: 100 }),
-    
-    description: text('description'),
-    
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (table) => [
-    index('document_user_idx').on(table.userId),
-    index('document_client_idx').on(table.clientId),
-    index('document_type_idx').on(table.type),
-    index('document_user_type_idx').on(table.userId, table.type), // Composite for filtered document lists
-]);
-
 // Job Offers table - Offres de mission
 export const jobOffers = pgTable('job_offers', {
     id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
@@ -315,10 +270,12 @@ export const jobOffers = pgTable('job_offers', {
     country: varchar('country', { length: 100 }).default('France'),
     
     serviceType: varchar('service_type', { length: 100 }), // Type de service requis
-    compensation: decimal('compensation', { precision: 10, scale: 2 }), // Rémunération proposée
+    hoursPerDay: decimal('hours_per_day', { precision: 5, scale: 2 }), // Nombre d'heures par jour (déprécié, conservé pour compatibilité)
+    compensation: decimal('compensation', { precision: 10, scale: 2 }), // Rémunération calculée = hourlyRate * nombre de jours
     notes: text('notes'), // Notes supplémentaires
+    numberOfPositions: integer('number_of_positions').notNull().default(1), // Nombre de postes disponibles pour cette mission
     
-    status: varchar('status', { length: 50 }).notNull().default('pending'), // 'pending', 'accepted', 'declined', 'expired'
+    status: varchar('status', { length: 50 }).notNull().default('pending'), // 'pending', 'accepted', 'declined', 'expired', 'in_progress', 'completed_pending_validation', 'needs_correction', 'completed_validated'
     respondedAt: timestamp('responded_at'),
     
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -330,6 +287,27 @@ export const jobOffers = pgTable('job_offers', {
     index('job_offer_worker_status_idx').on(table.workerId, table.status), // Composite pour les requêtes filtrées
     index('job_offer_client_status_idx').on(table.clientId, table.status),
     index('job_offer_dates_idx').on(table.startDate, table.endDate), // Pour les requêtes de plage de dates
+]);
+
+// Mission Hours table - Suivi des heures travaillées par les consultants
+export const missionHours = pgTable('mission_hours', {
+    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
+    offerId: varchar('offer_id', { length: 128 }).notNull().references(() => jobOffers.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    workerId: varchar('worker_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    
+    hoursWorked: decimal('hours_worked', { precision: 10, scale: 2 }).notNull(), // Nombre d'heures travaillées saisies par le consultant
+    status: varchar('status', { length: 50 }).notNull().default('pending_validation'), // 'pending_validation', 'needs_correction', 'validated'
+    rejectionNote: text('rejection_note'), // Note d'explication si rejeté par l'entreprise
+    validatedAt: timestamp('validated_at'), // Date de validation par l'entreprise
+    validatedBy: varchar('validated_by', { length: 128 }).references(() => users.id, { onDelete: 'set null', onUpdate: 'cascade' }), // ID de l'entreprise qui a validé
+    
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    index('mission_hours_offer_idx').on(table.offerId),
+    index('mission_hours_worker_idx').on(table.workerId),
+    index('mission_hours_status_idx').on(table.status),
+    index('mission_hours_offer_status_idx').on(table.offerId, table.status),
 ]);
 
 // Worker-Clients junction table - Relation many-to-many entre travailleurs et clients
@@ -405,8 +383,6 @@ export const usersRelations = relations(users, ({ many }) => ({
     appointments: many(appointments),
     tours: many(tours),
     invoices: many(invoices),
-    services: many(services),
-    documents: many(documents),
     settings: many(settings),
 }));
 
@@ -417,15 +393,6 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
     }),
     appointments: many(appointments),
     invoices: many(invoices),
-    documents: many(documents),
-}));
-
-export const servicesRelations = relations(services, ({ one, many }) => ({
-    user: one(users, {
-        fields: [services.userId],
-        references: [users.id],
-    }),
-    appointments: many(appointments),
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
@@ -436,10 +403,6 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
     client: one(clients, {
         fields: [appointments.clientId],
         references: [clients.id],
-    }),
-    service: one(services, {
-        fields: [appointments.serviceId],
-        references: [services.id],
     }),
     tour: one(tours, {
         fields: [appointments.tourId],
@@ -479,17 +442,6 @@ export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
     }),
 }));
 
-export const documentsRelations = relations(documents, ({ one }) => ({
-    user: one(users, {
-        fields: [documents.userId],
-        references: [users.id],
-    }),
-    client: one(clients, {
-        fields: [documents.clientId],
-        references: [clients.id],
-    }),
-}));
-
 export const settingsRelations = relations(settings, ({ one }) => ({
     user: one(users, {
         fields: [settings.userId],
@@ -497,7 +449,7 @@ export const settingsRelations = relations(settings, ({ one }) => ({
     }),
 }));
 
-export const jobOffersRelations = relations(jobOffers, ({ one }) => ({
+export const jobOffersRelations = relations(jobOffers, ({ one, many }) => ({
     client: one(users, {
         fields: [jobOffers.clientId],
         references: [users.id],
@@ -508,6 +460,7 @@ export const jobOffersRelations = relations(jobOffers, ({ one }) => ({
         references: [users.id],
         relationName: 'offerWorker',
     }),
+    hours: many(missionHours),
 }));
 
 export const workerClientsRelations = relations(workerClients, ({ one }) => ({
@@ -551,6 +504,23 @@ export const consultantPoolMembersRelations = relations(consultantPoolMembers, (
     }),
 }));
 
+export const missionHoursRelations = relations(missionHours, ({ one }) => ({
+    offer: one(jobOffers, {
+        fields: [missionHours.offerId],
+        references: [jobOffers.id],
+    }),
+    worker: one(users, {
+        fields: [missionHours.workerId],
+        references: [users.id],
+        relationName: 'hoursWorker',
+    }),
+    validator: one(users, {
+        fields: [missionHours.validatedBy],
+        references: [users.id],
+        relationName: 'hoursValidator',
+    }),
+}));
+
 // Types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -558,8 +528,6 @@ export type Admin = typeof admins.$inferSelect;
 export type NewAdmin = typeof admins.$inferInsert;
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
-export type Service = typeof services.$inferSelect;
-export type NewService = typeof services.$inferInsert;
 export type Appointment = typeof appointments.$inferSelect;
 export type NewAppointment = typeof appointments.$inferInsert;
 export type Tour = typeof tours.$inferSelect;
@@ -568,8 +536,6 @@ export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 export type InvoiceItem = typeof invoiceItems.$inferSelect;
 export type NewInvoiceItem = typeof invoiceItems.$inferInsert;
-export type Document = typeof documents.$inferSelect;
-export type NewDocument = typeof documents.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
 export type JobOffer = typeof jobOffers.$inferSelect;
@@ -580,3 +546,5 @@ export type ConsultantPool = typeof consultantPools.$inferSelect;
 export type NewConsultantPool = typeof consultantPools.$inferInsert;
 export type ConsultantPoolMember = typeof consultantPoolMembers.$inferSelect;
 export type NewConsultantPoolMember = typeof consultantPoolMembers.$inferInsert;
+export type MissionHours = typeof missionHours.$inferSelect;
+export type NewMissionHours = typeof missionHours.$inferInsert;

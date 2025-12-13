@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { apiClient } from '@/lib/utils/api-client'
 import { OfferModal } from '@/components/offers/OfferModal'
+import { FilterTabs, FilterType } from '@/components/common/FilterTabs'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Offer {
@@ -51,7 +52,7 @@ export default function OffersPage({ onShowAlert }: OffersPageProps) {
     const [offers, setOffers] = useState<OfferWithClient[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedOffer, setSelectedOffer] = useState<OfferWithClient | null>(null)
-    const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'declined'>('all')
+    const [filter, setFilter] = useState<FilterType>('all')
 
     useEffect(() => {
         loadOffers()
@@ -107,8 +108,39 @@ export default function OffersPage({ onShowAlert }: OffersPageProps) {
                 return 'bg-red-100 text-red-800 border-red-300'
             case 'expired':
                 return 'bg-gray-100 text-gray-800 border-gray-300'
+            case 'in_progress':
+                return 'bg-blue-100 text-blue-800 border-blue-300'
+            case 'completed_pending_validation':
+                return 'bg-orange-100 text-orange-800 border-orange-300'
+            case 'needs_correction':
+                return 'bg-red-100 text-red-800 border-red-300'
+            case 'completed_validated':
+                return 'bg-green-100 text-green-800 border-green-300'
             default:
                 return 'bg-gray-100 text-gray-800 border-gray-300'
+        }
+    }
+
+    const getStatusText = (status: string) => {
+        switch (status) {
+            case 'pending':
+                return t('offers.pending')
+            case 'accepted':
+                return t('offers.accepted')
+            case 'declined':
+                return t('offers.declined')
+            case 'expired':
+                return t('offers.expired')
+            case 'in_progress':
+                return t('missions.inProgress')
+            case 'completed_pending_validation':
+                return t('missions.pendingValidation')
+            case 'needs_correction':
+                return t('missions.needsCorrection')
+            case 'completed_validated':
+                return t('missions.validated')
+            default:
+                return status
         }
     }
 
@@ -121,51 +153,26 @@ export default function OffersPage({ onShowAlert }: OffersPageProps) {
     }
 
     return (
-        <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-primary mb-4">{t('offers.title')}</h2>
+        <div className="space-y-4 w-full max-w-full overflow-x-hidden pb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-primary mb-4">{t('offers.title')}</h2>
 
             {/* Filters */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-                <button
-                    onClick={() => setFilter('all')}
-                    className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
-                        filter === 'all'
-                            ? 'bg-[var(--primary)] text-white'
-                            : 'bg-white text-[var(--primary)] border-2 border-[var(--primary)]'
-                    }`}
-                >
-                    {t('offers.all')}
-                </button>
-                <button
-                    onClick={() => setFilter('pending')}
-                    className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
-                        filter === 'pending'
-                            ? 'bg-[var(--primary)] text-white'
-                            : 'bg-white text-[var(--primary)] border-2 border-[var(--primary)]'
-                    }`}
-                >
-                    {t('offers.pending')}
-                </button>
-                <button
-                    onClick={() => setFilter('accepted')}
-                    className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
-                        filter === 'accepted'
-                            ? 'bg-[var(--primary)] text-white'
-                            : 'bg-white text-[var(--primary)] border-2 border-[var(--primary)]'
-                    }`}
-                >
-                    {t('offers.accepted')}
-                </button>
-                <button
-                    onClick={() => setFilter('declined')}
-                    className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
-                        filter === 'declined'
-                            ? 'bg-[var(--primary)] text-white'
-                            : 'bg-white text-[var(--primary)] border-2 border-[var(--primary)]'
-                    }`}
-                >
-                    {t('offers.declined')}
-                </button>
+            <div className="w-full max-w-full overflow-x-hidden overflow-y-visible">
+                <FilterTabs
+                type="offers"
+                filters={[
+                    { value: 'all', labelKey: 'all', section: 'offers' },
+                    { value: 'pending', labelKey: 'pending', section: 'offers' },
+                    { value: 'accepted', labelKey: 'accepted', section: 'offers' },
+                    { value: 'declined', labelKey: 'declined', section: 'offers' },
+                    { value: 'in_progress', labelKey: 'inProgress', section: 'missions' },
+                    { value: 'completed_pending_validation', labelKey: 'pendingValidation', section: 'missions' },
+                    { value: 'needs_correction', labelKey: 'needsCorrection', section: 'missions' },
+                    { value: 'completed_validated', labelKey: 'validated', section: 'missions' },
+                ]}
+                currentFilter={filter}
+                onFilterChange={setFilter}
+            />
             </div>
 
             {/* Offers List */}
@@ -194,7 +201,7 @@ export default function OffersPage({ onShowAlert }: OffersPageProps) {
                                 <span
                                     className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadgeClass(item.offer.status)}`}
                                 >
-                                    {t(`offers.${item.offer.status}`)}
+                                    {getStatusText(item.offer.status)}
                                 </span>
                             </div>
                             <div className="space-y-1 text-sm text-secondary">
