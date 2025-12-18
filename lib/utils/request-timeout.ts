@@ -52,11 +52,6 @@ export async function withTimeout<T>(
  * Get timeout configuration for different endpoint types
  */
 export function getTimeoutForEndpoint(path: string): number {
-    // Admin endpoints can take longer
-    if (path.includes('/admin/')) {
-        return 60000 // 60 seconds
-    }
-
     // Payment/verification endpoints
     if (path.includes('/verify-ton') || path.includes('/telegram-webhook')) {
         return 45000 // 45 seconds

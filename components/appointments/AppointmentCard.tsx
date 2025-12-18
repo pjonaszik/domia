@@ -20,9 +20,12 @@ export function AppointmentCard({ appointment, onClick }: AppointmentCardProps) 
         no_show: 'bg-gray-100 text-gray-800',
     }
 
+    // Convertir la durée de minutes en heures
+    const durationHours = (appointment.duration / 60).toFixed(1)
+
     return (
         <div
-            className={`card-3d ${onClick ? 'cursor-pointer transition-all hover:scale-[1.02]' : ''}`}
+            className={`card-3d ${onClick ? 'cursor-pointer' : ''}`}
             onClick={onClick}
         >
             <div className="flex items-start justify-between">
@@ -42,7 +45,7 @@ export function AppointmentCard({ appointment, onClick }: AppointmentCardProps) 
                     <div className="flex items-center gap-4 text-sm text-secondary">
                         <span>
                             <i className="fas fa-clock mr-1"></i>
-                            {appointment.duration} {t('appointments.minutes')}
+                            {durationHours} {t('appointments.hours')}
                         </span>
                         {appointment.price && (
                             <span>

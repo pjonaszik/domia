@@ -91,7 +91,6 @@ export const rateLimiters = {
     pointsHistory: makeLimiter(10, 3600, "rl:points:history"), // 10 requests per hour (on-demand pruning + caching)
 
     strict: makeLimiter(10, 3600, "rl:strict"), // suspicious user mode
-    admin: makeLimiter(100, 60, "rl:admin"), // 100 admin requests per minute (higher limit for legitimate admin use)
     pointsRedeem: makeLimiter(5, 3600, "rl:redeem"), // 5 redemptions per hour
 };
 

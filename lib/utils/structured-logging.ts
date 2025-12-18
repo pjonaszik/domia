@@ -7,7 +7,7 @@ import { getRequestIdFromRequest } from './request-id'
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical'
 
 export interface SecurityEvent {
-    type: 'auth_failure' | 'auth_success' | 'rate_limit' | 'abuse_detected' | 'admin_action' | 'suspicious_activity' | 'payment_failure' | 'payment_success'
+    type: 'auth_failure' | 'auth_success' | 'rate_limit' | 'abuse_detected' | 'suspicious_activity' | 'payment_failure' | 'payment_success'
     severity: LogLevel
     userId?: string
     telegramId?: string

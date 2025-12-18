@@ -159,6 +159,7 @@ export async function POST(req: NextRequest) {
             country,
             serviceType,
             hourlyRate, // Required hourly rate specified by company
+            hoursPerDay, // Number of hours per day
             numberOfPositions, // Number of positions available
             notes,
             poolIds, // Array of pool IDs to assign the mission to
@@ -217,6 +218,13 @@ export async function POST(req: NextRequest) {
         if (!numberOfPositions || isNaN(parseInt(numberOfPositions.toString())) || parseInt(numberOfPositions.toString()) <= 0) {
             return NextResponse.json(
                 { error: 'Number of positions is required and must be greater than 0' },
+                { status: 400 }
+            );
+        }
+
+        if (!hoursPerDay || isNaN(parseFloat(hoursPerDay.toString())) || parseFloat(hoursPerDay.toString()) <= 0) {
+            return NextResponse.json(
+                { error: 'Hours per day is required and must be greater than 0' },
                 { status: 400 }
             );
         }
@@ -289,12 +297,13 @@ export async function POST(req: NextRequest) {
         // Calculate number of days
         const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
         const hourlyRateNum = parseFloat(hourlyRate.toString());
+        const hoursPerDayNum = parseFloat(hoursPerDay.toString());
 
         // Create job offers for all consultants with calculated compensation
         // auth.user is guaranteed to exist at this point due to the check above
         const offers = uniqueConsultants.map(consultant => {
-            // Calculate compensation: hourlyRate * number of days
-            const compensation = hourlyRateNum * daysDiff;
+            // Calculate compensation: hourlyRate * hoursPerDay * number of days
+            const compensation = hourlyRateNum * hoursPerDayNum * daysDiff;
             const calculatedCompensation = compensation.toFixed(2);
 
             return {
@@ -309,7 +318,7 @@ export async function POST(req: NextRequest) {
                 postalCode: postalCode.trim(),
                 country: country?.trim() || 'France',
                 serviceType: serviceType?.trim() || null,
-                hoursPerDay: null, // No longer used, kept for backward compatibility
+                hoursPerDay: parseFloat(hoursPerDay.toString()).toFixed(2),
                 compensation: calculatedCompensation,
                 notes: notes?.trim() || null,
                 numberOfPositions: parseInt(numberOfPositions.toString()),

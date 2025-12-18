@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { jobOffers, clients, appointments, workerClients, users } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 import { authenticateRequest } from '@/lib/utils/auth-middleware';
 
 export async function POST(
@@ -89,7 +89,18 @@ export async function POST(
             );
         }
 
-        // Vérifier qu'il n'y a pas de chevauchement avec d'autres rendez-vous
+        // Vérifier qu'il n'y a pas de chevauchement avec d'autres rendez-vous ou missions
+        // Minimum 30 minutes entre les missions/appointments
+        const MINIMUM_GAP_MINUTES = 30;
+        const MINIMUM_GAP_MS = MINIMUM_GAP_MINUTES * 60 * 1000;
+
+        const offerStart = new Date(offer.startDate);
+        const offerEnd = new Date(offer.endDate);
+        // Ajouter 30 minutes avant et après pour vérifier le gap
+        const offerStartWithGap = new Date(offerStart.getTime() - MINIMUM_GAP_MS);
+        const offerEndWithGap = new Date(offerEnd.getTime() + MINIMUM_GAP_MS);
+
+        // Vérifier les appointments existants
         const overlappingAppointments = await db
             .select()
             .from(appointments)
@@ -100,27 +111,70 @@ export async function POST(
                 )
             );
 
-        const offerStart = new Date(offer.startDate);
-        const offerEnd = new Date(offer.endDate);
-
-        const hasOverlap = overlappingAppointments.some(apt => {
+        const hasAppointmentOverlap = overlappingAppointments.some(apt => {
             const aptStart = new Date(apt.startTime);
             const aptEnd = new Date(apt.endTime);
-            return (offerStart < aptEnd && offerEnd > aptStart);
+            // Vérifier le chevauchement avec le gap de 30 minutes
+            return (offerStartWithGap < aptEnd && offerEndWithGap > aptStart);
         });
 
-        if (hasOverlap) {
+        if (hasAppointmentOverlap) {
             return NextResponse.json(
-                { error: 'This offer overlaps with an existing appointment' },
+                { error: 'This offer overlaps with an existing appointment or has less than 30 minutes gap' },
                 { status: 400 }
             );
         }
 
-        // Mettre à jour le statut de l'offre
+        // Vérifier les missions acceptées/en cours du même travailleur
+        const existingMissions = await db
+            .select()
+            .from(jobOffers)
+            .where(
+                and(
+                    eq(jobOffers.workerId, auth.user!.id),
+                    // Inclure seulement les missions acceptées/en cours
+                    or(
+                        eq(jobOffers.status, 'accepted'),
+                        eq(jobOffers.status, 'in_progress'),
+                        eq(jobOffers.status, 'completed_pending_validation'),
+                        eq(jobOffers.status, 'needs_correction'),
+                        eq(jobOffers.status, 'completed_validated')
+                    )
+                )
+            );
+
+        const hasMissionOverlap = existingMissions.some(existingOffer => {
+            // Ignorer l'offre actuelle
+            if (existingOffer.id === offer.id) {
+                return false;
+            }
+            
+            // Ignorer les offres pending, declined, expired
+            if (existingOffer.status === 'pending' || 
+                existingOffer.status === 'declined' || 
+                existingOffer.status === 'expired') {
+                return false;
+            }
+
+            const existingStart = new Date(existingOffer.startDate);
+            const existingEnd = new Date(existingOffer.endDate);
+            
+            // Vérifier le chevauchement avec le gap de 30 minutes
+            return (offerStartWithGap < existingEnd && offerEndWithGap > existingStart);
+        });
+
+        if (hasMissionOverlap) {
+            return NextResponse.json(
+                { error: 'This offer overlaps with an existing mission or has less than 30 minutes gap' },
+                { status: 400 }
+            );
+        }
+
+        // Mettre à jour le statut de l'offre à 'in_progress'
         await db
             .update(jobOffers)
             .set({
-                status: 'accepted',
+                status: 'in_progress',
                 respondedAt: new Date(),
                 updatedAt: new Date(),
             })
@@ -212,7 +266,7 @@ export async function POST(
                 endTime: offerEnd,
                 duration: duration,
                 serviceName: offer.serviceType || offer.title,
-                notes: `Créé automatiquement depuis l'offre: ${offer.title}${offer.notes ? '\n' + offer.notes : ''}`,
+                notes: offer.notes || null,
                 status: 'scheduled',
                 price: offer.compensation || null,
             })
@@ -220,7 +274,7 @@ export async function POST(
 
         return NextResponse.json({
             success: true,
-            offer: { ...offer, status: 'accepted' },
+            offer: { ...offer, status: 'in_progress' },
             appointment: newAppointment,
             client: existingClient,
         });

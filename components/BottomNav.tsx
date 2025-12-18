@@ -2,9 +2,7 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
 import '@fortawesome/fontawesome-free/css/all.min.css'
-import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
 import type { User } from '@/lib/db/schema'
 import { isCompany } from '@/lib/utils/user-type'
@@ -14,33 +12,12 @@ type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'o
 interface BottomNavProps {
     currentPage: Page
     onPageChange: (page: Page) => void
-    userId?: string
     user?: User | null
 }
 
-export function BottomNav({ currentPage, onPageChange, userId, user }: BottomNavProps) {
+export function BottomNav({ currentPage, onPageChange, user }: BottomNavProps) {
     const { t } = useLanguage()
-    const [isAdmin, setIsAdmin] = useState(false)
     const isCompanyUser = isCompany(user)
-
-    useEffect(() => {
-        const checkAdmin = async () => {
-            if (!userId) return
-            
-            try {
-                const response = await apiClient.get('/api/admin/check')
-                if (response.ok) {
-                    const data = await response.json()
-                    setIsAdmin(data.isAdmin || false)
-                }
-            } catch (error) {
-                // User is not an admin, which is fine - ignore 401 errors
-                setIsAdmin(false)
-            }
-        }
-
-        checkAdmin()
-    }, [userId])
 
     // Build navigation items based on user type
     const baseItems: Array<{ id: Page; label: string; icon: string }> = [
@@ -70,7 +47,7 @@ export function BottomNav({ currentPage, onPageChange, userId, user }: BottomNav
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 bg-white flex justify-around z-[100] w-full max-w-full"
+            className="fixed bottom-0 left-0 right-0 bg-white flex justify-around z-40 w-full max-w-full"
             style={{
                 borderTop: '4px solid var(--text-primary)',
                 padding: '8px 0',

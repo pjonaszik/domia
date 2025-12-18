@@ -90,25 +90,14 @@ export function LandingPage() {
                         </p>
                     </div>
 
-                    {/* Feature 4 */}
-                    <div className="card-3d p-6 hover:shadow-xl transition-all">
-                        <div className="w-16 h-16 rounded-lg bg-green-100 flex items-center justify-center mb-4">
-                            <i className="fas fa-file-invoice text-3xl text-green-600"></i>
-                        </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature4Title')}</h3>
-                        <p className="text-text-secondary">
-                            {t('landing.feature4Desc')}
-                        </p>
-                    </div>
-
                     {/* Feature 5 */}
                     <div className="card-3d p-6 hover:shadow-xl transition-all">
                         <div className="w-16 h-16 rounded-lg bg-orange-100 flex items-center justify-center mb-4">
                             <i className="fas fa-chart-line text-3xl text-orange-600"></i>
                         </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature5Title')}</h3>
+                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature4Title')}</h3>
                         <p className="text-text-secondary">
-                            {t('landing.feature5Desc')}
+                            {t('landing.feature4Desc')}
                         </p>
                     </div>
 
@@ -117,9 +106,9 @@ export function LandingPage() {
                         <div className="w-16 h-16 rounded-lg bg-pink-100 flex items-center justify-center mb-4">
                             <i className="fas fa-mobile-alt text-3xl text-pink-600"></i>
                         </div>
-                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature6Title')}</h3>
+                        <h3 className="text-xl font-bold text-primary mb-3">{t('landing.feature5Title')}</h3>
                         <p className="text-text-secondary">
-                            {t('landing.feature6Desc')}
+                            {t('landing.feature5Desc')}
                         </p>
                     </div>
                 </div>

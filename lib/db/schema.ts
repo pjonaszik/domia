@@ -17,7 +17,7 @@ export const users = pgTable('users', {
     // Profile
     firstName: varchar('first_name', { length: 255 }),
     lastName: varchar('last_name', { length: 255 }),
-    phone: varchar('phone', { length: 50 }),
+    phone: varchar('phone', { length: 50 }).notNull().unique(),
     
     // Professional information
     profession: varchar('profession', { length: 100 }), // 'infirmiere', 'aide_soignante', 'agent_entretien', 'aide_domicile', 'garde_enfants'
@@ -49,41 +49,6 @@ export const users = pgTable('users', {
     index('user_first_name_idx').on(table.firstName), // For consultant search
     index('user_last_name_idx').on(table.lastName), // For consultant search
     index('user_city_idx').on(table.city), // For consultant search
-]);
-
-// Admins table - Separate table for administrators
-export const admins = pgTable('admins', {
-    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    
-    // Authentication
-    email: varchar('email', { length: 255 }).notNull().unique(),
-    passwordHash: text('password_hash').notNull(),
-    emailVerified: boolean('email_verified').default(true).notNull(),
-    emailVerifiedAt: timestamp('email_verified_at').defaultNow(),
-    
-    // Profile
-    firstName: varchar('first_name', { length: 255 }),
-    lastName: varchar('last_name', { length: 255 }),
-    phone: varchar('phone', { length: 50 }),
-    
-    // Admin permissions
-    role: varchar('role', { length: 50 }).default('admin').notNull(), // 'admin', 'super_admin'
-    permissions: jsonb('permissions'), // JSON object with specific permissions
-    
-    // Admin metadata
-    grantedAt: timestamp('granted_at').defaultNow().notNull(),
-    grantedBy: varchar('granted_by', { length: 128 }), // ID of admin who granted access (self-reference, handled at application level)
-    isActive: boolean('is_active').default(true).notNull(),
-    
-    // Timestamps
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-    lastLoginAt: timestamp('last_login_at'),
-}, (table) => [
-    index('admin_email_idx').on(table.email),
-    index('admin_role_idx').on(table.role),
-    index('admin_active_idx').on(table.isActive),
-    index('admin_role_active_idx').on(table.role, table.isActive), // Composite for filtered queries
 ]);
 
 // Clients table
@@ -195,62 +160,6 @@ export const tours = pgTable('tours', {
     // Composite indexes for common query patterns
     index('tour_user_date_idx').on(table.userId, table.date), // For date-specific tour queries
     index('tour_user_status_idx').on(table.userId, table.status), // For filtered tour lists
-]);
-
-// Invoices table
-export const invoices = pgTable('invoices', {
-    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-    clientId: varchar('client_id', { length: 128 }).notNull().references(() => clients.id, { onDelete: 'restrict', onUpdate: 'cascade' }), // Restrict deletion if invoices exist
-    
-    invoiceNumber: varchar('invoice_number', { length: 50 }).notNull().unique(),
-    
-    // Dates
-    issueDate: timestamp('issue_date').notNull(),
-    dueDate: timestamp('due_date'),
-    
-    // Amounts
-    subtotal: decimal('subtotal', { precision: 10, scale: 2 }).notNull(),
-    tax: decimal('tax', { precision: 10, scale: 2 }).default('0.00').notNull(),
-    total: decimal('total', { precision: 10, scale: 2 }).notNull(),
-    
-    // Status
-    status: varchar('status', { length: 50 }).notNull().default('draft'), // 'draft', 'sent', 'paid', 'overdue', 'cancelled'
-    paidAt: timestamp('paid_at'),
-    paymentMethod: varchar('payment_method', { length: 50 }),
-    
-    // Notes
-    notes: text('notes'),
-    
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (table) => [
-    index('invoice_user_idx').on(table.userId),
-    index('invoice_client_idx').on(table.clientId),
-    index('invoice_number_idx').on(table.invoiceNumber),
-    index('invoice_status_idx').on(table.status),
-    index('invoice_issue_date_idx').on(table.issueDate),
-    // Composite indexes for common query patterns
-    index('invoice_user_status_idx').on(table.userId, table.status), // For filtered invoice lists
-    index('invoice_user_date_idx').on(table.userId, table.issueDate), // For date range queries
-    index('invoice_client_status_idx').on(table.clientId, table.status), // For client invoice history
-]);
-
-// Invoice items table
-export const invoiceItems = pgTable('invoice_items', {
-    id: varchar('id', { length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    invoiceId: varchar('invoice_id', { length: 128 }).notNull().references(() => invoices.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-    appointmentId: varchar('appointment_id', { length: 128 }).references(() => appointments.id, { onDelete: 'set null', onUpdate: 'cascade' }), // Optional reference to appointment
-    
-    description: text('description').notNull(),
-    quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull().default('1.00'),
-    unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
-    total: decimal('total', { precision: 10, scale: 2 }).notNull(),
-    
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => [
-    index('invoice_item_invoice_idx').on(table.invoiceId),
-    index('invoice_item_appointment_idx').on(table.appointmentId),
 ]);
 
 // Job Offers table - Offres de mission
@@ -382,7 +291,6 @@ export const usersRelations = relations(users, ({ many }) => ({
     clients: many(clients),
     appointments: many(appointments),
     tours: many(tours),
-    invoices: many(invoices),
     settings: many(settings),
 }));
 
@@ -392,7 +300,6 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
         references: [users.id],
     }),
     appointments: many(appointments),
-    invoices: many(invoices),
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
@@ -408,7 +315,6 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
         fields: [appointments.tourId],
         references: [tours.id],
     }),
-    invoiceItems: many(invoiceItems),
 }));
 
 export const toursRelations = relations(tours, ({ one, many }) => ({
@@ -417,29 +323,6 @@ export const toursRelations = relations(tours, ({ one, many }) => ({
         references: [users.id],
     }),
     appointments: many(appointments),
-}));
-
-export const invoicesRelations = relations(invoices, ({ one, many }) => ({
-    user: one(users, {
-        fields: [invoices.userId],
-        references: [users.id],
-    }),
-    client: one(clients, {
-        fields: [invoices.clientId],
-        references: [clients.id],
-    }),
-    items: many(invoiceItems),
-}));
-
-export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
-    invoice: one(invoices, {
-        fields: [invoiceItems.invoiceId],
-        references: [invoices.id],
-    }),
-    appointment: one(appointments, {
-        fields: [invoiceItems.appointmentId],
-        references: [appointments.id],
-    }),
 }));
 
 export const settingsRelations = relations(settings, ({ one }) => ({
@@ -524,18 +407,12 @@ export const missionHoursRelations = relations(missionHours, ({ one }) => ({
 // Types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type Admin = typeof admins.$inferSelect;
-export type NewAdmin = typeof admins.$inferInsert;
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
 export type Appointment = typeof appointments.$inferSelect;
 export type NewAppointment = typeof appointments.$inferInsert;
 export type Tour = typeof tours.$inferSelect;
 export type NewTour = typeof tours.$inferInsert;
-export type Invoice = typeof invoices.$inferSelect;
-export type NewInvoice = typeof invoices.$inferInsert;
-export type InvoiceItem = typeof invoiceItems.$inferSelect;
-export type NewInvoiceItem = typeof invoiceItems.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
 export type JobOffer = typeof jobOffers.$inferSelect;

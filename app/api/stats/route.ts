@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { appointments, invoices, clients } from '@/lib/db/schema';
+import { appointments, clients } from '@/lib/db/schema';
 import { eq, and, gte, lte, count } from 'drizzle-orm';
 import { authenticateRequest } from '@/lib/utils/auth-middleware';
 
@@ -46,25 +46,9 @@ export async function GET(req: NextRequest) {
         const completedAppointments = appointmentsInRange.filter(a => a.status === 'completed').length;
         const cancelledAppointments = appointmentsInRange.filter(a => a.status === 'cancelled').length;
 
-        // Revenue stats
-        const invoicesInRange = await db
-            .select()
-            .from(invoices)
-            .where(
-                and(
-                    eq(invoices.userId, userId),
-                    gte(invoices.issueDate, start),
-                    lte(invoices.issueDate, end)
-                )
-            );
-
-        const totalRevenue = invoicesInRange
-            .filter(i => i.status === 'paid')
-            .reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
-
-        const pendingRevenue = invoicesInRange
-            .filter(i => i.status === 'sent')
-            .reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
+        // Revenue stats (not tracked)
+        const totalRevenue = 0;
+        const pendingRevenue = 0;
 
         // Today's appointments
         const today = new Date();
@@ -83,29 +67,8 @@ export async function GET(req: NextRequest) {
                 )
             );
         
-        // Monthly revenue (current month)
-        const monthStart = new Date();
-        monthStart.setDate(1);
-        monthStart.setHours(0, 0, 0, 0);
-        const monthEnd = new Date();
-        monthEnd.setMonth(monthEnd.getMonth() + 1);
-        monthEnd.setDate(0);
-        monthEnd.setHours(23, 59, 59, 999);
-        
-        const monthlyInvoices = await db
-            .select()
-            .from(invoices)
-            .where(
-                and(
-                    eq(invoices.userId, userId),
-                    gte(invoices.issueDate, monthStart),
-                    lte(invoices.issueDate, monthEnd)
-                )
-            );
-        
-        const monthlyRevenue = monthlyInvoices
-            .filter(i => i.status === 'paid')
-            .reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
+        // Monthly revenue (not tracked)
+        const monthlyRevenue = 0;
 
         return NextResponse.json({
             stats: {
@@ -123,11 +86,6 @@ export async function GET(req: NextRequest) {
                     total: totalRevenue,
                     pending: pendingRevenue,
                     monthly: monthlyRevenue,
-                    invoices: {
-                        total: invoicesInRange.length,
-                        paid: invoicesInRange.filter(i => i.status === 'paid').length,
-                        pending: invoicesInRange.filter(i => i.status === 'sent').length,
-                    },
                 },
                 period: {
                     start: start.toISOString(),

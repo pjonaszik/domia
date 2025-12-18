@@ -5,6 +5,8 @@
 import { useState } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { ValidateHoursModal } from './ValidateHoursModal'
+import { isCompany } from '@/lib/utils/user-type'
+import type { User } from '@/lib/db/schema'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Mission {
@@ -24,6 +26,10 @@ interface Mission {
     pendingCount: number
     acceptedCount: number
     declinedCount: number
+    inProgressCount?: number
+    completedPendingValidationCount?: number
+    needsCorrectionCount?: number
+    completedValidatedCount?: number
     consultantsNotified: number
 }
 
@@ -31,11 +37,13 @@ interface MissionModalProps {
     mission: Mission
     onClose: () => void
     onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
+    user?: User | null
 }
 
-export function MissionModal({ mission, onClose, onShowAlert }: MissionModalProps) {
+export function MissionModal({ mission, onClose, onShowAlert, user }: MissionModalProps) {
     const { t } = useLanguage()
     const [showValidateHours, setShowValidateHours] = useState(false)
+    const isCompanyUser = isCompany(user)
 
     const formatDate = (date: string | Date) => {
         const dateObj = typeof date === 'string' ? new Date(date) : date
@@ -67,28 +75,30 @@ export function MissionModal({ mission, onClose, onShowAlert }: MissionModalProp
                         </button>
                     </div>
 
-                    {/* Statistics */}
-                    <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold text-primary mb-3">{t('missions.statistics')}</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <p className="text-sm text-secondary">{t('missions.consultantsNotifiedPlural', { count: mission.consultantsNotified.toString() })}</p>
-                                <p className="text-lg font-bold text-primary">{mission.consultantsNotified}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-secondary">{t('missions.pending')}</p>
-                                <p className="text-lg font-bold text-yellow-600">{mission.pendingCount}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-secondary">{t('missions.accepted')}</p>
-                                <p className="text-lg font-bold text-green-600">{mission.acceptedCount}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-secondary">{t('missions.declined')}</p>
-                                <p className="text-lg font-bold text-red-600">{mission.declinedCount}</p>
+                    {/* Statistics - Only for companies */}
+                    {isCompanyUser && (
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <h3 className="font-semibold text-primary mb-3">{t('missions.statistics')}</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <p className="text-sm text-secondary">{t('missions.consultantsNotifiedPlural', { count: mission.consultantsNotified.toString() })}</p>
+                                    <p className="text-lg font-bold text-primary">{mission.consultantsNotified}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-secondary">{t('missions.pending')}</p>
+                                    <p className="text-lg font-bold text-yellow-600">{mission.pendingCount}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-secondary">{t('missions.accepted')}</p>
+                                    <p className="text-lg font-bold text-green-600">{mission.acceptedCount}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-secondary">{t('missions.declined')}</p>
+                                    <p className="text-lg font-bold text-red-600">{mission.declinedCount}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Description */}
                     {mission.description && (
@@ -113,7 +123,12 @@ export function MissionModal({ mission, onClose, onShowAlert }: MissionModalProp
                             {(() => {
                                 const start = typeof mission.startDate === 'string' ? new Date(mission.startDate) : mission.startDate
                                 const end = typeof mission.endDate === 'string' ? new Date(mission.endDate) : mission.endDate
-                                const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+                                // Calculer le nombre de jours calendaires entre les deux dates
+                                // Normaliser les dates à minuit pour calculer les jours calendaires
+                                const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+                                const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+                                // Calculer la différence en jours calendaires (inclusif)
+                                const daysDiff = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
                                 return (
                                     <p>
                                         <i className="fas fa-calendar-alt mr-2" aria-hidden="true"></i>
@@ -159,8 +174,8 @@ export function MissionModal({ mission, onClose, onShowAlert }: MissionModalProp
                         </div>
                     )}
 
-                    {/* Validate Hours Button */}
-                    {(mission.pendingCount > 0 || mission.acceptedCount > 0) && (
+                    {/* Validate Hours Button (company only) */}
+                    {isCompanyUser && ((mission.completedPendingValidationCount ?? 0) > 0 || (mission.needsCorrectionCount ?? 0) > 0) && (
                         <div className="mt-6 pt-4 border-t-2 border-[var(--primary)]">
                             <button
                                 onClick={() => setShowValidateHours(true)}

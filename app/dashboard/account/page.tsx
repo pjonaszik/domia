@@ -48,7 +48,6 @@ export default function AccountPage() {
     const [currency, setCurrency] = useState('EUR')
     const [sepaIban, setSepaIban] = useState('')
     const [sepaBic, setSepaBic] = useState('')
-    const [sepaAccountHolder, setSepaAccountHolder] = useState('')
     const [hourlyRate, setHourlyRate] = useState('')
 
     useEffect(() => {
@@ -118,7 +117,7 @@ export default function AccountPage() {
                 return
             }
             
-            await apiClient.put('/api/users/hourly-rate', {
+            await apiClient.put('/api/users/me', {
                 hourlyRate: hourlyRateNum.toFixed(2),
             })
 

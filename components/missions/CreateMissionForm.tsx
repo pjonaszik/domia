@@ -37,6 +37,7 @@ export function CreateMissionForm({ onMissionCreated, onShowAlert }: CreateMissi
         country: 'France',
         serviceType: '',
         hourlyRate: '',
+        hoursPerDay: '7',
         numberOfPositions: '1',
         notes: '',
         selectedPoolIds: [] as string[],
@@ -111,6 +112,12 @@ export function CreateMissionForm({ onMissionCreated, onShowAlert }: CreateMissi
                 return
             }
 
+            if (!formData.hoursPerDay || isNaN(parseFloat(formData.hoursPerDay)) || parseFloat(formData.hoursPerDay) <= 0) {
+                onShowAlert?.(t('missions.hoursPerDayRequired'), 'error')
+                setCreating(false)
+                return
+            }
+
             const response = await apiClient.post('/api/missions', {
                 title: formData.title.trim(),
                 description: formData.description.trim() || null,
@@ -122,6 +129,7 @@ export function CreateMissionForm({ onMissionCreated, onShowAlert }: CreateMissi
                 country: formData.country,
                 serviceType: formData.serviceType.trim() || null,
                 hourlyRate: parseFloat(formData.hourlyRate),
+                hoursPerDay: parseFloat(formData.hoursPerDay),
                 numberOfPositions: parseInt(formData.numberOfPositions),
                 notes: formData.notes.trim() || null,
                 poolIds: formData.selectedPoolIds,
@@ -149,6 +157,7 @@ export function CreateMissionForm({ onMissionCreated, onShowAlert }: CreateMissi
                 country: 'France',
                 serviceType: '',
                 hourlyRate: '',
+                hoursPerDay: '7',
                 numberOfPositions: '1',
                 notes: '',
                 selectedPoolIds: [],
@@ -364,6 +373,58 @@ export function CreateMissionForm({ onMissionCreated, onShowAlert }: CreateMissi
                 </p>
             </div>
 
+            {/* Hours Per Day */}
+            <div>
+                <label htmlFor="mission-hours-per-day" className="block text-sm font-semibold text-primary mb-1">
+                    {t('missions.hoursPerDay')} *
+                </label>
+                <input
+                    id="mission-hours-per-day"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={formData.hoursPerDay}
+                    onChange={(e) => {
+                        const value = e.target.value
+                        // Allow up to 2 decimal places
+                        if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                            setFormData({ ...formData, hoursPerDay: value })
+                        }
+                    }}
+                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                    placeholder={t('missions.hoursPerDayPlaceholder')}
+                />
+                <p className="text-xs text-secondary mt-1">
+                    {t('missions.hoursPerDayHint')}
+                </p>
+            </div>
+
+            {/* Number of Positions */}
+            <div>
+                <label htmlFor="mission-number-of-positions" className="block text-sm font-semibold text-primary mb-1">
+                    {t('missions.numberOfPositions')} *
+                </label>
+                <input
+                    id="mission-number-of-positions"
+                    type="number"
+                    min="1"
+                    required
+                    value={formData.numberOfPositions}
+                    onChange={(e) => {
+                        const value = e.target.value
+                        if (value === '' || /^\d+$/.test(value)) {
+                            setFormData({ ...formData, numberOfPositions: value })
+                        }
+                    }}
+                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                    placeholder={t('missions.numberOfPositionsPlaceholder')}
+                />
+                <p className="text-xs text-secondary mt-1">
+                    {t('missions.numberOfPositionsHint')}
+                </p>
+            </div>
+
             {/* Notes */}
             <div>
                 <label htmlFor="mission-notes" className="block text-sm font-semibold text-primary mb-1">
@@ -440,6 +501,7 @@ export function CreateMissionForm({ onMissionCreated, onShowAlert }: CreateMissi
                         country: 'France',
                         serviceType: '',
                         hourlyRate: '',
+                        hoursPerDay: '7',
                         numberOfPositions: '1',
                         notes: '',
                         selectedPoolIds: [],

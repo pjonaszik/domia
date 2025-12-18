@@ -21,12 +21,22 @@ export async function GET(req: NextRequest) {
         // Build conditions
         const conditions = [eq(appointments.userId, auth.user!.id)];
 
-        if (startDate) {
-            conditions.push(gte(appointments.startTime, new Date(startDate)));
-        }
-
-        if (endDate) {
-            conditions.push(lte(appointments.endTime, new Date(endDate)));
+        // Pour les appointments qui chevauchent la période demandée :
+        // Un appointment chevauche si : startTime <= endDate ET endTime >= startDate
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            // Un appointment chevauche la période si :
+            // - Il commence avant ou pendant la période (startTime <= endDate)
+            // - Il se termine après ou pendant la période (endTime >= startDate)
+            conditions.push(lte(appointments.startTime, end));
+            conditions.push(gte(appointments.endTime, start));
+        } else if (startDate) {
+            // Si seulement startDate est fourni, retourner les appointments qui se terminent après startDate
+            conditions.push(gte(appointments.endTime, new Date(startDate)));
+        } else if (endDate) {
+            // Si seulement endDate est fourni, retourner les appointments qui commencent avant endDate
+            conditions.push(lte(appointments.startTime, new Date(endDate)));
         }
 
         if (clientId) {

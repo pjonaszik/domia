@@ -11,7 +11,7 @@ import { isCompany } from '@/lib/utils/user-type'
 interface Stats {
     clients: { total: number }
     appointments: { total: number; completed: number; cancelled: number; completionRate: number }
-    revenue: { total: number; pending: number; invoices: { total: number; paid: number; pending: number } }
+    revenue: { total: number; pending: number }
 }
 
 export function DashboardStats() {
@@ -97,10 +97,6 @@ export function DashboardStats() {
                             <span className="font-semibold text-orange-600">
                                 {stats.revenue.pending.toFixed(2)} €
                             </span>
-                        </div>
-                        <div className="flex justify-between text-sm text-secondary mt-2">
-                            <span>{t('dashboard.invoicesCount', { count: stats.revenue.invoices.total.toString() })}</span>
-                            <span>{t('dashboard.paidCount', { count: stats.revenue.invoices.paid.toString() })}</span>
                         </div>
                     </div>
                 </div>

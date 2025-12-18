@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 return
             }
 
-            const response = await apiClient.get('/api/auth/me')
+            const response = await apiClient.get('/api/users/me')
             
             if (!response.ok) {
                 if (response.status === 401) {

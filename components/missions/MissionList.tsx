@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { MissionModal } from './MissionModal'
 import { CreateMissionForm } from './CreateMissionForm'
 import { FilterTabs, FilterType } from '@/components/common/FilterTabs'
+import type { User } from '@/lib/db/schema'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Mission {
@@ -37,9 +38,10 @@ interface Mission {
 interface MissionListProps {
     refreshKey?: number
     onShowAlert?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void
+    user?: User | null
 }
 
-export function MissionList({ refreshKey, onShowAlert }: MissionListProps) {
+export function MissionList({ refreshKey, onShowAlert, user }: MissionListProps) {
     const { t } = useLanguage()
     const [missions, setMissions] = useState<Mission[]>([])
     const [loading, setLoading] = useState(true)
@@ -197,7 +199,7 @@ export function MissionList({ refreshKey, onShowAlert }: MissionListProps) {
 
             {/* Create Mission Form Modal */}
             {showCreateMission && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4 overflow-y-auto">
                     <div className="card-3d max-w-md w-full max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-bold text-primary">{t('missions.createMission')}</h2>
@@ -278,7 +280,10 @@ export function MissionList({ refreshKey, onShowAlert }: MissionListProps) {
                                 {(() => {
                                     const start = typeof mission.startDate === 'string' ? new Date(mission.startDate) : mission.startDate
                                     const end = typeof mission.endDate === 'string' ? new Date(mission.endDate) : mission.endDate
-                                    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+                                    // Calculer le nombre de jours calendaires entre les deux dates
+                                    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+                                    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+                                    const daysDiff = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
                                     return (
                                         <p>
                                             <i className="fas fa-calendar-day mr-2" aria-hidden="true"></i>
@@ -317,6 +322,7 @@ export function MissionList({ refreshKey, onShowAlert }: MissionListProps) {
                     mission={selectedMission}
                     onClose={handleCloseModal}
                     onShowAlert={onShowAlert}
+                    user={user}
                 />
             )}
         </div>

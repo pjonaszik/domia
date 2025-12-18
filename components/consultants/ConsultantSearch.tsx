@@ -45,7 +45,7 @@ export function ConsultantSearch({ onShowAlert }: ConsultantSearchProps) {
         try {
             setLoading(true)
             setHasSearched(true)
-            const url = `/api/consultants/search?q=${encodeURIComponent(query)}`
+            const url = `/api/workers/search?q=${encodeURIComponent(query)}`
             
             const response = await apiClient.get(url)
             
@@ -55,7 +55,7 @@ export function ConsultantSearch({ onShowAlert }: ConsultantSearchProps) {
             }
             
             const data = await response.json()
-            setConsultants(data.consultants || [])
+            setConsultants(data.workers || [])
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : t('consultants.errorSearching')
             onShowAlert?.(errorMsg, 'error')

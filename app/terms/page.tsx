@@ -50,7 +50,6 @@ export default function TermsPage() {
                             <li>Gérer vos clients et leurs informations</li>
                             <li>Planifier et optimiser vos tournées</li>
                             <li>Organiser vos rendez-vous et visites</li>
-                            <li>Générer et suivre vos factures</li>
                             <li>Consulter vos statistiques et rapports</li>
                             </ul>
                         </section>

@@ -2,8 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { jobOffers, users } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { jobOffers, users, appointments } from '@/lib/db/schema';
+import { eq, and, desc, or } from 'drizzle-orm';
 import { authenticateRequest } from '@/lib/utils/auth-middleware';
 
 export async function GET(req: NextRequest) {
@@ -39,7 +39,83 @@ export async function GET(req: NextRequest) {
             .where(and(...conditions))
             .orderBy(desc(jobOffers.createdAt));
 
-        return NextResponse.json({ offers: offersList });
+        // Filtrer les offres qui chevauchent avec le planning du consultant
+        // Minimum 30 minutes entre les missions/appointments
+        const MINIMUM_GAP_MINUTES = 30;
+        const MINIMUM_GAP_MS = MINIMUM_GAP_MINUTES * 60 * 1000;
+
+        // Récupérer les appointments et missions existants du consultant
+        const existingAppointments = await db
+            .select()
+            .from(appointments)
+            .where(
+                and(
+                    eq(appointments.userId, auth.user!.id),
+                    eq(appointments.status, 'scheduled')
+                )
+            );
+
+        const existingMissions = await db
+            .select()
+            .from(jobOffers)
+            .where(
+                and(
+                    eq(jobOffers.workerId, auth.user!.id),
+                    // Inclure seulement les missions acceptées/en cours
+                    or(
+                        eq(jobOffers.status, 'accepted'),
+                        eq(jobOffers.status, 'in_progress'),
+                        eq(jobOffers.status, 'completed_pending_validation'),
+                        eq(jobOffers.status, 'needs_correction'),
+                        eq(jobOffers.status, 'completed_validated')
+                    )
+                )
+            );
+
+        // Filtrer les offres qui ne chevauchent pas
+        const filteredOffers = offersList.filter(offerItem => {
+            const offer = offerItem.offer;
+            
+            // Si l'offre n'est pas pending, on la garde (elle a déjà été traitée)
+            if (offer.status !== 'pending') {
+                return true;
+            }
+
+            const offerStart = new Date(offer.startDate);
+            const offerEnd = new Date(offer.endDate);
+            const offerStartWithGap = new Date(offerStart.getTime() - MINIMUM_GAP_MS);
+            const offerEndWithGap = new Date(offerEnd.getTime() + MINIMUM_GAP_MS);
+
+            // Vérifier le chevauchement avec les appointments
+            const hasAppointmentOverlap = existingAppointments.some(apt => {
+                const aptStart = new Date(apt.startTime);
+                const aptEnd = new Date(apt.endTime);
+                return (offerStartWithGap < aptEnd && offerEndWithGap > aptStart);
+            });
+
+            if (hasAppointmentOverlap) {
+                return false;
+            }
+
+            // Vérifier le chevauchement avec les missions existantes
+            const hasMissionOverlap = existingMissions.some(existingOffer => {
+                if (existingOffer.id === offer.id) {
+                    return false;
+                }
+
+                const existingStart = new Date(existingOffer.startDate);
+                const existingEnd = new Date(existingOffer.endDate);
+                return (offerStartWithGap < existingEnd && offerEndWithGap > existingStart);
+            });
+
+            if (hasMissionOverlap) {
+                return false;
+            }
+
+            return true;
+        });
+
+        return NextResponse.json({ offers: filteredOffers });
     } catch (error) {
         console.error('Get offers error:', error);
         return NextResponse.json(

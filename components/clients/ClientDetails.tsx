@@ -6,8 +6,8 @@ import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { formatAddress } from '@/lib/utils/address-helpers'
-import type { Client, Appointment, Invoice } from '@/lib/db/schema'
-import { formatDate, formatDateTime } from '@/lib/utils/date-helpers'
+import type { Client, Appointment } from '@/lib/db/schema'
+import { formatDateTime } from '@/lib/utils/date-helpers'
 
 interface ClientDetailsProps {
     clientId: string
@@ -19,7 +19,6 @@ export function ClientDetails({ clientId, onEdit, onShowAlert }: ClientDetailsPr
     const { t } = useLanguage()
     const [client, setClient] = useState<Client | null>(null)
     const [appointments, setAppointments] = useState<Appointment[]>([])
-    const [invoices, setInvoices] = useState<Invoice[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -29,10 +28,9 @@ export function ClientDetails({ clientId, onEdit, onShowAlert }: ClientDetailsPr
     const loadClientData = async () => {
         try {
             setLoading(true)
-            const [clientRes, appointmentsRes, invoicesRes] = await Promise.all([
+            const [clientRes, appointmentsRes] = await Promise.all([
                 apiClient.get(`/api/clients/${clientId}`),
                 apiClient.get(`/api/appointments?clientId=${clientId}`),
-                apiClient.get(`/api/invoices?clientId=${clientId}`),
             ])
 
             if (clientRes.ok) {
@@ -43,11 +41,6 @@ export function ClientDetails({ clientId, onEdit, onShowAlert }: ClientDetailsPr
             if (appointmentsRes.ok) {
                 const data = await appointmentsRes.json()
                 setAppointments(data.appointments || [])
-            }
-
-            if (invoicesRes.ok) {
-                const data = await invoicesRes.json()
-                setInvoices(data.invoices || [])
             }
         } catch (error) {
             console.error('Error loading client data:', error)
@@ -177,31 +170,6 @@ export function ClientDetails({ clientId, onEdit, onShowAlert }: ClientDetailsPr
                 </div>
             )}
 
-            {invoices.length > 0 && (
-                <div className="card-3d">
-                    <h3 className="text-lg font-bold text-primary mb-3">{t('invoices.title')}</h3>
-                    <div className="space-y-2">
-                        {invoices.slice(0, 5).map((inv) => (
-                            <div key={inv.id} className="flex items-center justify-between border-l-4 border-[var(--secondary)] pl-3 py-2">
-                                <div>
-                                    <p className="font-semibold text-primary">{inv.invoiceNumber}</p>
-                                    <p className="text-sm text-secondary">{formatDate(inv.issueDate)}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold text-primary">{parseFloat(inv.total || '0').toFixed(2)} €</p>
-                                    <p className={`text-xs ${
-                                        inv.status === 'paid' ? 'text-green-600' :
-                                        inv.status === 'sent' ? 'text-orange-600' :
-                                        'text-gray-600'
-                                    }`}>
-                                        {t(`invoices.statusLabels.${inv.status}`) || inv.status}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

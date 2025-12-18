@@ -67,7 +67,8 @@ export function ValidateHoursModal({ mission, onClose, onShowAlert }: ValidateHo
                 const data = await response.json()
                 setHours(data.hours || [])
             } else {
-                onShowAlert?.(t('missions.errorLoading'), 'error')
+                const errorData = await response.json().catch(() => null as any)
+                onShowAlert?.(errorData?.error || t('missions.errorLoading'), 'error')
             }
         } catch (error) {
             console.error('Error loading hours:', error)
@@ -83,7 +84,7 @@ export function ValidateHoursModal({ mission, onClose, onShowAlert }: ValidateHo
             const hoursData = hours.find(h => h.id === hoursId)
             if (!hoursData) return
 
-            const response = await apiClient.post(`/api/missions/${hoursData.offerId}/validate-hours`, {
+            const response = await apiClient.post(`/api/offers/${hoursData.offerId}/validate-hours`, {
                 hoursId,
                 action: 'validate',
             })
@@ -114,7 +115,7 @@ export function ValidateHoursModal({ mission, onClose, onShowAlert }: ValidateHo
             const hoursData = hours.find(h => h.id === selectedHoursId)
             if (!hoursData) return
 
-            const response = await apiClient.post(`/api/missions/${hoursData.offerId}/validate-hours`, {
+            const response = await apiClient.post(`/api/offers/${hoursData.offerId}/validate-hours`, {
                 hoursId: selectedHoursId,
                 action: 'reject',
                 rejectionNote: rejectionNote.trim(),

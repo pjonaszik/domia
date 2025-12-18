@@ -6,8 +6,9 @@ import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { AppointmentCard } from './AppointmentCard'
-import { formatDate, getDayRange, addDaysToDate, isSameDate } from '@/lib/utils/date-helpers'
+import { formatDate, getDayRange, addDaysToDate } from '@/lib/utils/date-helpers'
 import { MissionList } from '@/components/missions/MissionList'
+import { MissionModal } from '@/components/missions/MissionModal'
 import { isCompany } from '@/lib/utils/user-type'
 import type { Appointment } from '@/lib/db/schema'
 import type { User } from '@/lib/db/schema'
@@ -26,6 +27,8 @@ export function CalendarView({ user, onSelectAppointment, onShowAlert }: Calenda
     const [loading, setLoading] = useState(true)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
     const [refreshKey, setRefreshKey] = useState(0)
+    const [selectedMission, setSelectedMission] = useState<any>(null)
+    const [loadingMission, setLoadingMission] = useState(false)
 
     useEffect(() => {
         loadAppointments()
@@ -62,9 +65,20 @@ export function CalendarView({ user, onSelectAppointment, onShowAlert }: Calenda
         setSelectedDate(null)
     }
 
-    const dayAppointments = selectedDate
-        ? appointments.filter(apt => isSameDate(apt.startTime, selectedDate))
-        : appointments.filter(apt => isSameDate(apt.startTime, currentDate))
+    // Filtrer les appointments qui chevauchent la date sélectionnée
+    // Pour les missions multi-jours, on affiche celles qui chevauchent la date
+    const dayAppointments = appointments.filter(apt => {
+        const aptStart = new Date(apt.startTime)
+        const aptEnd = new Date(apt.endTime)
+        const targetDate = selectedDate || currentDate
+        const targetStart = new Date(targetDate)
+        targetStart.setHours(0, 0, 0, 0)
+        const targetEnd = new Date(targetDate)
+        targetEnd.setHours(23, 59, 59, 999)
+        
+        // Vérifier si l'appointment chevauche la date cible
+        return aptStart <= targetEnd && aptEnd >= targetStart
+    })
 
     const sortedAppointments = [...dayAppointments].sort((a, b) => {
         return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
@@ -75,11 +89,49 @@ export function CalendarView({ user, onSelectAppointment, onShowAlert }: Calenda
         setRefreshKey(prev => prev + 1)
     }
 
+    const handleAppointmentClick = async (appointment: Appointment) => {
+        try {
+            setLoadingMission(true)
+            // Essayer de récupérer la mission associée à cet appointment
+            const response = await apiClient.get(`/api/appointments/${appointment.id}/mission`)
+            if (response.ok) {
+                const data = await response.json()
+                // Adapter les données pour correspondre à l'interface Mission
+                const mission = {
+                    ...data.mission,
+                    startDate: new Date(data.mission.startDate),
+                    endDate: new Date(data.mission.endDate),
+                    createdAt: new Date(data.mission.createdAt || new Date()),
+                    totalOffers: 1,
+                    pendingCount: data.mission.status === 'pending' ? 1 : 0,
+                    acceptedCount: data.mission.status === 'accepted' || data.mission.status === 'in_progress' ? 1 : 0,
+                    declinedCount: data.mission.status === 'declined' ? 1 : 0,
+                    consultantsNotified: 1,
+                }
+                setSelectedMission(mission)
+            } else {
+                // Si pas de mission trouvée, utiliser le callback par défaut
+                onSelectAppointment?.(appointment)
+            }
+        } catch (error) {
+            console.error('Error loading mission:', error)
+            // En cas d'erreur, utiliser le callback par défaut
+            onSelectAppointment?.(appointment)
+        } finally {
+            setLoadingMission(false)
+        }
+    }
+
+    const handleCloseMissionModal = () => {
+        setSelectedMission(null)
+        loadAppointments() // Rafraîchir les appointments
+    }
+
     // For companies, show mission list instead of calendar
     if (isCompanyUser) {
         return (
             <div className="space-y-4">
-                <MissionList key={refreshKey} onShowAlert={onShowAlert} />
+                <MissionList key={refreshKey} onShowAlert={onShowAlert} user={user} />
             </div>
         )
     }
@@ -129,12 +181,22 @@ export function CalendarView({ user, onSelectAppointment, onShowAlert }: Calenda
                             <AppointmentCard
                                 key={appointment.id}
                                 appointment={appointment}
-                                onClick={() => onSelectAppointment?.(appointment)}
+                                onClick={() => handleAppointmentClick(appointment)}
                             />
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Mission Modal */}
+            {selectedMission && (
+                <MissionModal
+                    mission={selectedMission}
+                    onClose={handleCloseMissionModal}
+                    onShowAlert={onShowAlert}
+                    user={user}
+                />
+            )}
         </div>
     )
 }
