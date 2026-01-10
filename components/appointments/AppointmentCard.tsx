@@ -9,9 +9,10 @@ import { formatDateTime } from '@/lib/utils/date-helpers'
 interface AppointmentCardProps {
     appointment: Appointment
     onClick?: () => void
+    distanceKm?: number | null
 }
 
-export function AppointmentCard({ appointment, onClick }: AppointmentCardProps) {
+export function AppointmentCard({ appointment, onClick, distanceKm }: AppointmentCardProps) {
     const { t } = useLanguage()
     const statusColors: Record<string, string> = {
         scheduled: 'bg-blue-100 text-blue-800',
@@ -47,6 +48,12 @@ export function AppointmentCard({ appointment, onClick }: AppointmentCardProps) 
                             <i className="fas fa-clock mr-1"></i>
                             {durationHours} {t('appointments.hours')}
                         </span>
+                        {typeof distanceKm === 'number' && Number.isFinite(distanceKm) && (
+                            <span>
+                                <i className="fas fa-location-dot mr-1" aria-hidden="true"></i>
+                                ~{distanceKm.toFixed(1)} km
+                            </span>
+                        )}
                         {appointment.price && (
                             <span>
                                 <i className="fas fa-euro-sign mr-1"></i>

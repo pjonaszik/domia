@@ -33,8 +33,7 @@ interface OfferWithClient {
     offer: Offer
     client: {
         id: string
-        firstName: string | null
-        lastName: string | null
+        businessName: string
         email: string | null
         phone: string | null
     }
@@ -122,7 +121,7 @@ export function OfferModal({ offer, onClose, onShowAlert }: OfferModalProps) {
                     <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                         <h3 className="font-semibold text-primary mb-2">{t('offers.from')}</h3>
                         <p className="text-secondary">
-                            {offer.client.firstName} {offer.client.lastName}
+                            {offer.client.businessName}
                         </p>
                         {offer.client.email && (
                             <p className="text-sm text-secondary">

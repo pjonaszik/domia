@@ -3,19 +3,18 @@
 
 /**
  * Check if a user is a company (legal entity)
- * A user is considered a company if firstName is null and lastName exists
- * (as per registration logic: for legal entities, firstName is null and lastName contains company name)
+ * A user is considered a company if they have NO profession (companies send missions, workers receive them)
  */
-export function isCompany(user: { firstName: string | null; lastName: string | null } | null | undefined): boolean {
-    if (!user) return false
-    return user.firstName === null && user.lastName !== null && user.lastName !== ''
+export function isCompany(user: { profession: string | null } | null | undefined): boolean {
+    if (!user) return false;
+    // Company = no profession defined
+    return !user.profession;
 }
 
 /**
  * Check if a user is a physical person (worker)
  */
-export function isWorker(user: { firstName: string | null; lastName: string | null } | null | undefined): boolean {
-    if (!user) return false
-    return !isCompany(user)
+export function isWorker(user: { profession: string | null } | null | undefined): boolean {
+    if (!user) return false;
+    return !isCompany(user);
 }
-

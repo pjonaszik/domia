@@ -269,13 +269,6 @@
     text-shadow: 1px 1px 0 var(--gray-disabled-dark);
   }
 
-  /* Stats card */
-  .stat-card {
-    @apply text-center p-3 rounded-xl;
-    background: var(--bg-card);
-    border: 3px solid var(--primary);
-  }
-
   /* Points display - Using Jua font specifically */
   .points-display {
     @apply text-5xl font-bold flex items-center justify-center gap-2;

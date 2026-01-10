@@ -28,8 +28,7 @@ export async function GET(req: NextRequest) {
                 offer: jobOffers,
                 client: {
                     id: users.id,
-                    firstName: users.firstName,
-                    lastName: users.lastName,
+                    businessName: users.businessName,
                     email: users.email,
                     phone: users.phone,
                 },
@@ -44,33 +43,34 @@ export async function GET(req: NextRequest) {
         const MINIMUM_GAP_MINUTES = 30;
         const MINIMUM_GAP_MS = MINIMUM_GAP_MINUTES * 60 * 1000;
 
-        // Récupérer les appointments et missions existants du consultant
-        const existingAppointments = await db
-            .select()
-            .from(appointments)
-            .where(
-                and(
-                    eq(appointments.userId, auth.user!.id),
-                    eq(appointments.status, 'scheduled')
-                )
-            );
-
-        const existingMissions = await db
-            .select()
-            .from(jobOffers)
-            .where(
-                and(
-                    eq(jobOffers.workerId, auth.user!.id),
-                    // Inclure seulement les missions acceptées/en cours
-                    or(
-                        eq(jobOffers.status, 'accepted'),
-                        eq(jobOffers.status, 'in_progress'),
-                        eq(jobOffers.status, 'completed_pending_validation'),
-                        eq(jobOffers.status, 'needs_correction'),
-                        eq(jobOffers.status, 'completed_validated')
+        // Parallelize queries for better performance (avoid sequential latency)
+        const [existingAppointments, existingMissions] = await Promise.all([
+            db
+                .select()
+                .from(appointments)
+                .where(
+                    and(
+                        eq(appointments.userId, auth.user!.id),
+                        eq(appointments.status, 'scheduled')
+                    )
+                ),
+            db
+                .select()
+                .from(jobOffers)
+                .where(
+                    and(
+                        eq(jobOffers.workerId, auth.user!.id),
+                        // Inclure seulement les missions acceptées/en cours
+                        or(
+                            eq(jobOffers.status, 'accepted'),
+                            eq(jobOffers.status, 'in_progress'),
+                            eq(jobOffers.status, 'completed_pending_validation'),
+                            eq(jobOffers.status, 'needs_correction'),
+                            eq(jobOffers.status, 'completed_validated')
+                        )
                     )
                 )
-            );
+        ]);
 
         // Filtrer les offres qui ne chevauchent pas
         const filteredOffers = offersList.filter(offerItem => {
@@ -117,7 +117,13 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ offers: filteredOffers });
     } catch (error) {
-        console.error('Get offers error:', error);
+        // Sanitize error for production (don't expose stack traces)
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (isProduction) {
+            console.error('Get offers error:', error instanceof Error ? error.message : 'Unknown error');
+        } else {
+            console.error('Get offers error:', error);
+        }
         return NextResponse.json(
             { error: 'Failed to fetch offers' },
             { status: 500 }

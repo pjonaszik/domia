@@ -49,6 +49,10 @@ export default function AccountPage() {
     const [sepaIban, setSepaIban] = useState('')
     const [sepaBic, setSepaBic] = useState('')
     const [hourlyRate, setHourlyRate] = useState('')
+    const [userAddress, setUserAddress] = useState('')
+    const [userCity, setUserCity] = useState('')
+    const [userPostalCode, setUserPostalCode] = useState('')
+    const [userCountry, setUserCountry] = useState('France')
 
     useEffect(() => {
         loadSettings()
@@ -80,6 +84,10 @@ export default function AccountPage() {
                 if (userResponse.ok) {
                     const userData = await userResponse.json()
                     setHourlyRate(userData.user?.hourlyRate || '')
+                    setUserAddress(userData.user?.address || '')
+                    setUserCity(userData.user?.city || '')
+                    setUserPostalCode(userData.user?.postalCode || '')
+                    setUserCountry(userData.user?.country || 'France')
                 }
             }
         } catch (error) {
@@ -119,6 +127,10 @@ export default function AccountPage() {
             
             await apiClient.put('/api/users/me', {
                 hourlyRate: hourlyRateNum.toFixed(2),
+                address: userAddress.trim() || null,
+                city: userCity.trim() || null,
+                postalCode: userPostalCode.trim() || null,
+                country: userCountry.trim() || null,
             })
 
             if (response.ok) {
@@ -175,15 +187,9 @@ export default function AccountPage() {
                 <div className="space-y-4 mb-6">
                     <div>
                         <label className="block text-sm font-semibold text-primary mb-1">
-                            {t('auth.firstName')}
+                            {t('auth.businessName')}
                         </label>
-                        <p className="text-secondary">{user?.firstName || '-'}</p>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-primary mb-1">
-                            {t('auth.lastName')}
-                        </label>
-                        <p className="text-secondary">{user?.lastName || '-'}</p>
+                        <p className="text-secondary">{user?.businessName || '-'}</p>
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-primary mb-1">
@@ -225,6 +231,51 @@ export default function AccountPage() {
                         {t('language.change')}
                     </label>
                     <LanguageSelector />
+                </div>
+            </div>
+
+            {/* RGPD - Data Export */}
+            <div className="card-3d">
+                <h3 className="text-lg font-bold text-primary mb-4">
+                    <i className="fas fa-shield-alt mr-2" aria-hidden="true"></i>
+                    {t('account.dataPrivacy')}
+                </h3>
+                <div className="space-y-4">
+                    <p className="text-sm text-secondary">
+                        {t('account.dataPrivacyDescription')}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const response = await apiClient.get('/api/users/me/export');
+                                    const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `domia-export-${new Date().toISOString().split('T')[0]}.json`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    document.body.removeChild(a);
+                                    setAlert({ message: t('account.exportSuccess'), type: 'success' });
+                                } catch (error) {
+                                    setAlert({ message: t('account.exportError'), type: 'error' });
+                                }
+                            }}
+                            className="px-4 py-3 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary-dark)] transition-colors font-semibold flex items-center justify-center gap-2"
+                        >
+                            <i className="fas fa-download" aria-hidden="true"></i>
+                            {t('account.exportData')}
+                        </button>
+                        <a
+                            href="/privacy"
+                            className="px-4 py-3 border-2 border-[var(--primary)] text-[var(--primary)] rounded-lg hover:bg-[var(--primary)] hover:text-white transition-colors font-semibold text-center"
+                        >
+                            <i className="fas fa-file-contract mr-2" aria-hidden="true"></i>
+                            {t('account.privacyPolicy')}
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -338,6 +389,69 @@ export default function AccountPage() {
                                     placeholder={t('settings.hourlyRatePlaceholder')}
                                 />
                                 <p className="text-xs text-secondary mt-1">{t('settings.hourlyRateHint')}</p>
+                            </div>
+
+                            <div className="pt-2">
+                                <h4 className="font-semibold text-primary mb-2">{t('offers.address')}</h4>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-primary mb-1">
+                                            {t('clients.address')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={userAddress}
+                                            onChange={(e) => setUserAddress(e.target.value)}
+                                            className="w-full px-3 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                            placeholder={t('clients.address')}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-primary mb-1">
+                                                {t('clients.city')}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={userCity}
+                                                onChange={(e) => setUserCity(e.target.value)}
+                                                className="w-full px-3 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                                placeholder={t('clients.city')}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-primary mb-1">
+                                                {t('clients.postalCode')}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={userPostalCode}
+                                                onChange={(e) => setUserPostalCode(e.target.value)}
+                                                className="w-full px-3 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                                placeholder={t('clients.postalCode')}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-primary mb-1">
+                                            {t('clients.country')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={userCountry}
+                                            onChange={(e) => setUserCountry(e.target.value)}
+                                            className="w-full px-3 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                            placeholder={t('clients.country')}
+                                        />
+                                    </div>
+
+                                    <p className="text-xs text-secondary">
+                                        {t('appointments.distanceIsApprox')}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 

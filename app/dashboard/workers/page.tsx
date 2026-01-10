@@ -10,8 +10,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Worker {
     id: string
-    firstName: string | null
-    lastName: string | null
+    businessName: string
     email: string | null
     phone: string | null
     profession: string | null
@@ -144,49 +143,51 @@ export default function WorkersPage() {
                     <h3 className="font-semibold text-primary">
                         {t('offers.resultsCount', { count: workers.length.toString() })}
                     </h3>
-                    {workers.map((worker) => (
-                        <div key={worker.id} className="card-3d">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-primary text-lg">
-                                        {worker.firstName} {worker.lastName}
-                                    </h4>
-                                    {worker.profession && (
-                                        <p className="text-sm text-secondary">
-                                            {getProfessionLabel(worker.profession)}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        {workers.map((worker) => (
+                            <div key={worker.id} className="card-3d">
+                                <div className="flex items-start justify-between mb-2">
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-primary text-lg">
+                                            {worker.businessName}
+                                        </h4>
+                                        {worker.profession && (
+                                            <p className="text-sm text-secondary">
+                                                {getProfessionLabel(worker.profession)}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-1 text-sm text-secondary mb-3">
+                                    {worker.email && (
+                                        <p>
+                                            <i className="fas fa-envelope mr-2" aria-hidden="true"></i>
+                                            {worker.email}
+                                        </p>
+                                    )}
+                                    {worker.phone && (
+                                        <p>
+                                            <i className="fas fa-phone mr-2" aria-hidden="true"></i>
+                                            {worker.phone}
+                                        </p>
+                                    )}
+                                    {worker.city && (
+                                        <p>
+                                            <i className="fas fa-map-marker-alt mr-2" aria-hidden="true"></i>
+                                            {worker.city} {worker.postalCode}
                                         </p>
                                     )}
                                 </div>
+                                <button
+                                    onClick={() => handleCreateOffer(worker)}
+                                    className="w-full px-4 py-2 bg-[var(--primary)] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                                >
+                                    <i className="fas fa-paper-plane" aria-hidden="true"></i>
+                                    <span>{t('offers.sendOffer')}</span>
+                                </button>
                             </div>
-                            <div className="space-y-1 text-sm text-secondary mb-3">
-                                {worker.email && (
-                                    <p>
-                                        <i className="fas fa-envelope mr-2" aria-hidden="true"></i>
-                                        {worker.email}
-                                    </p>
-                                )}
-                                {worker.phone && (
-                                    <p>
-                                        <i className="fas fa-phone mr-2" aria-hidden="true"></i>
-                                        {worker.phone}
-                                    </p>
-                                )}
-                                {worker.city && (
-                                    <p>
-                                        <i className="fas fa-map-marker-alt mr-2" aria-hidden="true"></i>
-                                        {worker.city} {worker.postalCode}
-                                    </p>
-                                )}
-                            </div>
-                            <button
-                                onClick={() => handleCreateOffer(worker)}
-                                className="w-full px-4 py-2 bg-[var(--primary)] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                            >
-                                <i className="fas fa-paper-plane" aria-hidden="true"></i>
-                                <span>{t('offers.sendOffer')}</span>
-                            </button>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             )}
 

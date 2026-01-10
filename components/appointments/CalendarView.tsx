@@ -12,6 +12,7 @@ import { MissionModal } from '@/components/missions/MissionModal'
 import { isCompany } from '@/lib/utils/user-type'
 import type { Appointment } from '@/lib/db/schema'
 import type { User } from '@/lib/db/schema'
+import { distanceKm } from '@/lib/utils/distance'
 
 interface CalendarViewProps {
     user?: User | null
@@ -23,7 +24,11 @@ export function CalendarView({ user, onSelectAppointment, onShowAlert }: Calenda
     const { t } = useLanguage()
     const isCompanyUser = isCompany(user)
     const [currentDate, setCurrentDate] = useState(new Date())
-    const [appointments, setAppointments] = useState<Appointment[]>([])
+    type AppointmentWithCoords = Appointment & {
+        clientLatitude?: string | null
+        clientLongitude?: string | null
+    }
+    const [appointments, setAppointments] = useState<AppointmentWithCoords[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
     const [refreshKey, setRefreshKey] = useState(0)
@@ -176,14 +181,30 @@ export function CalendarView({ user, onSelectAppointment, onShowAlert }: Calenda
                         <p className="text-secondary">{t('appointments.noAppointments')}</p>
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {sortedAppointments.map((appointment) => (
-                            <AppointmentCard
-                                key={appointment.id}
-                                appointment={appointment}
-                                onClick={() => handleAppointmentClick(appointment)}
-                            />
-                        ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        {sortedAppointments.map((appointment) => {
+                            const workerLat = parseFloat(String((user as any)?.latitude ?? ''))
+                            const workerLon = parseFloat(String((user as any)?.longitude ?? ''))
+                            const clientLat = parseFloat(String((appointment as any)?.clientLatitude ?? ''))
+                            const clientLon = parseFloat(String((appointment as any)?.clientLongitude ?? ''))
+
+                            const hasCoords =
+                                Number.isFinite(workerLat) &&
+                                Number.isFinite(workerLon) &&
+                                Number.isFinite(clientLat) &&
+                                Number.isFinite(clientLon)
+
+                            const km = hasCoords ? distanceKm(workerLat, workerLon, clientLat, clientLon) : null
+
+                            return (
+                                <AppointmentCard
+                                    key={appointment.id}
+                                    appointment={appointment}
+                                    distanceKm={km}
+                                    onClick={() => handleAppointmentClick(appointment)}
+                                />
+                            )
+                        })}
                     </div>
                 )}
             </div>

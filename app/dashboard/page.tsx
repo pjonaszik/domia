@@ -11,13 +11,12 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { ClientList } from '@/components/clients/ClientList'
 import { TourList } from '@/components/tours/TourList'
 import { CalendarView } from '@/components/appointments/CalendarView'
-import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { HomeDashboard } from '@/components/dashboard/HomeDashboard'
 import AccountPage from './account/page'
 import OffersPage from './offers/page'
 import { PoolList } from '@/components/pools/PoolList'
 
-type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'offers' | 'pools'
+type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'account' | 'offers' | 'pools'
 
 export default function DashboardPage() {
   const { user, loading: authLoading, error: authError } = useAuth()
@@ -79,7 +78,7 @@ export default function DashboardPage() {
         <div className="floating-shape rounded-full" style={{ top: '60%', right: '10%', width: '80px', height: '80px', background: 'var(--primary)', animationDelay: '6s', opacity: 0.05 }} aria-hidden="true" />
       </div>
 
-      <main id="main-content" className="container mx-auto max-w-md pb-24 sm:pb-28 relative w-full max-w-full overflow-x-clip" style={{ maxWidth: '100vw', width: '100%', overflowX: 'clip', paddingTop: 'calc(70px + env(safe-area-inset-top))', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+      <main id="main-content" className="container mx-auto max-w-md md:max-w-6xl pb-24 sm:pb-28 relative w-full max-w-full overflow-x-clip" style={{ maxWidth: '100vw', width: '100%', overflowX: 'clip', paddingTop: 'calc(70px + env(safe-area-inset-top))', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         {currentPage === 'home' && (
           <div className="px-5 pt-5">
             <HomeDashboard 
@@ -102,11 +101,6 @@ export default function DashboardPage() {
         {currentPage === 'calendar' && (
           <div className="px-5 pt-5">
             <CalendarView user={user} onShowAlert={showAlert} />
-          </div>
-        )}
-        {currentPage === 'stats' && (
-          <div className="px-5 pt-5">
-            <DashboardStats />
           </div>
         )}
         {currentPage === 'account' && (

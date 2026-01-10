@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
         // Base conditions: only physical persons (workers/consultants)
         const conditions = [
-            isNotNull(users.firstName),
+            isNotNull(users.businessName),
             isNotNull(users.profession),
         ];
 
@@ -52,15 +52,14 @@ export async function GET(req: NextRequest) {
         }
 
         if (searchTerm.length >= 2) {
-            const escapedSearchTerm = searchTerm.replace(/'/g, "''");
-            const searchPattern = `%${escapedSearchTerm}%`;
+            // Use Drizzle placeholders instead of sql.raw() to prevent SQL injection
+            const searchPattern = `%${searchTerm}%`;
             conditions.push(
                 or(
-                    sql`LOWER(${users.firstName}::text) LIKE LOWER(${sql.raw(`'${searchPattern}'`)})`,
-                    sql`LOWER(${users.lastName}::text) LIKE LOWER(${sql.raw(`'${searchPattern}'`)})`,
-                    sql`LOWER(COALESCE(${users.profession}::text, '')) LIKE LOWER(${sql.raw(`'${searchPattern}'`)})`,
-                    sql`LOWER(COALESCE(${users.city}::text, '')) LIKE LOWER(${sql.raw(`'${searchPattern}'`)})`,
-                    sql`LOWER(${users.email}::text) LIKE LOWER(${sql.raw(`'${searchPattern}'`)})`
+                    sql`LOWER(${users.businessName}::text) LIKE LOWER(${searchPattern})`,
+                    sql`LOWER(COALESCE(${users.profession}::text, '')) LIKE LOWER(${searchPattern})`,
+                    sql`LOWER(COALESCE(${users.city}::text, '')) LIKE LOWER(${searchPattern})`,
+                    sql`LOWER(${users.email}::text) LIKE LOWER(${searchPattern})`
                 )!
             );
         } else if (searchTerm.length > 0) {
@@ -71,8 +70,7 @@ export async function GET(req: NextRequest) {
         const workers = await db
             .select({
                 id: users.id,
-                firstName: users.firstName,
-                lastName: users.lastName,
+                businessName: users.businessName,
                 email: users.email,
                 phone: users.phone,
                 profession: users.profession,

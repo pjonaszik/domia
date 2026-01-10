@@ -6,7 +6,6 @@ import { db } from '@/lib/db';
 import { missionHours, jobOffers, users, settings } from '@/lib/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { authenticateRequest } from '@/lib/utils/auth-middleware';
-import { isCompany } from '@/lib/utils/user-type';
 
 export async function GET(req: NextRequest) {
     try {
@@ -15,7 +14,9 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (!isCompany(auth.user)) {
+        // Check if user is a company (has no profession = company)
+        const userIsCompany = !auth.user.profession;
+        if (!userIsCompany) {
             return NextResponse.json({ error: 'Only companies can view mission hours' }, { status: 403 });
         }
 
@@ -69,8 +70,7 @@ export async function GET(req: NextRequest) {
                 updatedAt: missionHours.updatedAt,
                 worker: {
                     id: users.id,
-                    firstName: users.firstName,
-                    lastName: users.lastName,
+                    businessName: users.businessName,
                     email: users.email,
                 },
             })

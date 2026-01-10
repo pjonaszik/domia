@@ -211,12 +211,18 @@ export async function POST(
             existingClient = existingClients[0];
         } else {
             // Créer le client dans la table clients du travailleur
+            // Extract first and last name from businessName for client record
+            const businessName = clientUser.businessName || 'Client';
+            const nameParts = businessName.split(' ');
+            const firstName = nameParts[0] || 'Client';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
             const [newClient] = await db
                 .insert(clients)
                 .values({
                     userId: auth.user!.id,
-                    firstName: clientUser.firstName || 'Client',
-                    lastName: clientUser.lastName || '',
+                    firstName,
+                    lastName,
                     phone: clientUser.phone || null,
                     email: clientUser.email || null,
                     address: offer.address,

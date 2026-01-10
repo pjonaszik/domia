@@ -14,9 +14,8 @@ export const users = pgTable('users', {
     emailVerified: boolean('email_verified').default(false).notNull(),
     emailVerifiedAt: timestamp('email_verified_at'),
     
-    // Profile
-    firstName: varchar('first_name', { length: 255 }),
-    lastName: varchar('last_name', { length: 255 }),
+    // Profile (business-to-business only)
+    businessName: varchar('business_name', { length: 255 }).notNull(), // Peut être "Macia Interim", "Jean Pascal", "Sarl Mirano"...
     phone: varchar('phone', { length: 50 }).notNull().unique(),
     
     // Professional information
@@ -30,6 +29,8 @@ export const users = pgTable('users', {
     city: varchar('city', { length: 100 }),
     postalCode: varchar('postal_code', { length: 10 }),
     country: varchar('country', { length: 100 }).default('France'),
+    latitude: decimal('latitude', { precision: 10, scale: 8 }), // For geocoding
+    longitude: decimal('longitude', { precision: 11, scale: 8 }), // For geocoding
     
     // Settings
     timezone: varchar('timezone', { length: 50 }).default('Europe/Paris'),
@@ -46,9 +47,8 @@ export const users = pgTable('users', {
     index('user_business_id_idx').on(table.businessId), // For business ID lookups
     index('user_country_idx').on(table.country), // For country-based queries
     index('user_created_at_idx').on(table.createdAt), // For user analytics
-    index('user_first_name_idx').on(table.firstName), // For consultant search
-    index('user_last_name_idx').on(table.lastName), // For consultant search
-    index('user_city_idx').on(table.city), // For consultant search
+    index('user_business_name_idx').on(table.businessName), // For search
+    index('user_city_idx').on(table.city), // For search
 ]);
 
 // Clients table
@@ -70,10 +70,8 @@ export const clients = pgTable('clients', {
     latitude: decimal('latitude', { precision: 10, scale: 8 }), // For geocoding
     longitude: decimal('longitude', { precision: 11, scale: 8 }), // For geocoding
     
-    // Medical/Service information
+    // Service information (non-sensitive only)
     notes: text('notes'), // General notes
-    medicalNotes: text('medical_notes'), // Medical notes (for healthcare professionals)
-    allergies: text('allergies'),
     emergencyContact: jsonb('emergency_contact'), // { name, phone, relationship }
     
     // Status
@@ -425,3 +423,17 @@ export type ConsultantPoolMember = typeof consultantPoolMembers.$inferSelect;
 export type NewConsultantPoolMember = typeof consultantPoolMembers.$inferInsert;
 export type MissionHours = typeof missionHours.$inferSelect;
 export type NewMissionHours = typeof missionHours.$inferInsert;
+
+// Geocode cache table - avoid re-geocoding same addresses
+export const geocodeCache = pgTable('geocode_cache', {
+    normalizedAddress: text('normalized_address').primaryKey(),
+    latitude: decimal('latitude', { precision: 10, scale: 8 }).notNull(),
+    longitude: decimal('longitude', { precision: 11, scale: 8 }).notNull(),
+    provider: varchar('provider', { length: 50 }).default('nominatim'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('geocode_cache_created_at_idx').on(table.createdAt),
+]);
+
+export type GeocodeCache = typeof geocodeCache.$inferSelect;
+export type NewGeocodeCache = typeof geocodeCache.$inferInsert;

@@ -17,8 +17,7 @@ interface Pool {
 
 interface Consultant {
     id: string
-    firstName: string | null
-    lastName: string | null
+    businessName: string
     email: string
     phone: string | null
     profession: string | null
@@ -70,19 +69,16 @@ export function PoolModal({ pool, onClose, onShowAlert }: PoolModalProps) {
         
         const searchLower = searchTerm.toLowerCase().trim()
         return poolConsultants.filter((consultant) => {
-            const firstName = consultant.firstName?.toLowerCase() || ''
-            const lastName = consultant.lastName?.toLowerCase() || ''
+            const businessName = consultant.businessName?.toLowerCase() || ''
             const email = consultant.email?.toLowerCase() || ''
             const profession = consultant.profession?.toLowerCase() || ''
             const city = consultant.city?.toLowerCase() || ''
             
             return (
-                firstName.includes(searchLower) ||
-                lastName.includes(searchLower) ||
+                businessName.includes(searchLower) ||
                 email.includes(searchLower) ||
                 profession.includes(searchLower) ||
-                city.includes(searchLower) ||
-                `${firstName} ${lastName}`.includes(searchLower)
+                city.includes(searchLower)
             )
         })
     }, [poolConsultants, searchTerm])
@@ -125,7 +121,7 @@ export function PoolModal({ pool, onClose, onShowAlert }: PoolModalProps) {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="card-3d max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="card-3d max-w-md md:max-w-6xl w-full max-h-[80vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         {pool.color && (
@@ -174,7 +170,7 @@ export function PoolModal({ pool, onClose, onShowAlert }: PoolModalProps) {
                             </p>
                         </div>
                     ) : (
-                        <div className="space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                             {filteredConsultants.map((consultant) => (
                                 <div
                                     key={consultant.id}
@@ -183,7 +179,7 @@ export function PoolModal({ pool, onClose, onShowAlert }: PoolModalProps) {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
                                             <span className="font-semibold text-primary">
-                                                {consultant.firstName} {consultant.lastName?.[0]?.toUpperCase()}.
+                                                {consultant.businessName}
                                             </span>
                                         </div>
                                         <div className="flex flex-wrap gap-2">

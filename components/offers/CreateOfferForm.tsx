@@ -9,8 +9,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Worker {
     id: string
-    firstName: string | null
-    lastName: string | null
+    businessName: string
     email: string | null
     phone: string | null
     profession: string | null
@@ -111,7 +110,7 @@ export function CreateOfferForm({ worker, onClose }: CreateOfferFormProps) {
                         <div>
                             <h2 className="text-2xl font-bold text-primary">{t('offers.create')}</h2>
                             <p className="text-sm text-secondary mt-1">
-                                {t('offers.toWorker', { name: `${worker.firstName} ${worker.lastName}` })}
+                                {t('offers.toWorker', { name: worker.businessName })}
                             </p>
                         </div>
                         <button

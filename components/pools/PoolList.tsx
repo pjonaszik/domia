@@ -201,7 +201,7 @@ export function PoolList({ onShowAlert }: PoolListProps) {
                     <p className="text-secondary">{t('pools.noPools')}</p>
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     {pools.map((pool) => (
                         <div
                             key={pool.id}

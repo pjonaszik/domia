@@ -18,8 +18,7 @@ interface HoursData {
     updatedAt: string
     worker: {
         id: string
-        firstName: string | null
-        lastName: string | null
+        businessName: string
         email: string | null
     }
     sepaPayment: {
@@ -202,7 +201,7 @@ export function ValidateHoursModal({ mission, onClose, onShowAlert }: ValidateHo
                                     {/* Consultant Info */}
                                     <div className="mb-4">
                                         <h3 className="font-semibold text-primary mb-2">
-                                            {t('missions.consultantName')}: {hour.worker.firstName} {hour.worker.lastName}
+                                            {t('missions.consultantName')}: {hour.worker.businessName}
                                         </h3>
                                         {hour.worker.email && (
                                             <p className="text-sm text-secondary">

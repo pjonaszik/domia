@@ -63,8 +63,6 @@ export function ClientList({ onSelectClient, onShowAlert }: ClientListProps) {
         if (!searchTerm) return true
         const search = searchTerm.toLowerCase()
         return (
-            client.firstName?.toLowerCase().includes(search) ||
-            client.lastName?.toLowerCase().includes(search) ||
             client.city?.toLowerCase().includes(search) ||
             client.phone?.includes(search)
         )
@@ -143,7 +141,7 @@ export function ClientList({ onSelectClient, onShowAlert }: ClientListProps) {
                     </p>
                 </div>
             ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     {filteredClients.map((client) => (
                         <ClientCard
                             key={client.id}

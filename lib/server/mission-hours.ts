@@ -16,8 +16,7 @@ export async function getOfferHoursWithWorkerAndSepa(offerId: string) {
             createdAt: missionHours.createdAt,
             updatedAt: missionHours.updatedAt,
             workerId: users.id,
-            workerFirstName: users.firstName,
-            workerLastName: users.lastName,
+            workerBusinessName: users.businessName,
             workerEmail: users.email,
             settingsPreferences: settings.preferences,
         })
@@ -41,8 +40,7 @@ export async function getOfferHoursWithWorkerAndSepa(offerId: string) {
             updatedAt: r.updatedAt,
             worker: {
                 id: r.workerId,
-                firstName: r.workerFirstName,
-                lastName: r.workerLastName,
+                businessName: r.workerBusinessName,
                 email: r.workerEmail,
             },
             sepaPayment: sepa

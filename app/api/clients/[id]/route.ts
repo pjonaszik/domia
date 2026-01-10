@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { clients } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { authenticateRequest } from '@/lib/utils/auth-middleware';
+import { formatAddressForGeocoding, geocodeAddressWithNominatim } from '@/lib/server/geocoding';
 
 export async function GET(
     req: NextRequest,
@@ -57,7 +58,7 @@ export async function PUT(
 
         const { id } = await params;
         const body = await req.json();
-        const { firstName, lastName, phone, email, address, city, postalCode, country, notes, medicalNotes, allergies, emergencyContact, isActive } = body;
+        const { firstName, lastName, phone, email, address, city, postalCode, country, notes, emergencyContact, isActive } = body;
 
         // Check if client exists and belongs to user
         const [existingClient] = await db
@@ -78,6 +79,35 @@ export async function PUT(
             );
         }
 
+        const nextAddress = address !== undefined ? address : existingClient.address;
+        const nextCity = city !== undefined ? city : existingClient.city;
+        const nextPostalCode = postalCode !== undefined ? postalCode : existingClient.postalCode;
+        const nextCountry = country !== undefined ? country : existingClient.country;
+
+        const addressChanged =
+            nextAddress !== existingClient.address ||
+            nextCity !== existingClient.city ||
+            nextPostalCode !== existingClient.postalCode ||
+            nextCountry !== existingClient.country;
+
+        let nextLatitude = existingClient.latitude;
+        let nextLongitude = existingClient.longitude;
+        if (addressChanged) {
+            const geocodeQuery = formatAddressForGeocoding({
+                address: nextAddress,
+                postalCode: nextPostalCode,
+                city: nextCity,
+                country: nextCountry || 'France',
+            });
+            const coords = await geocodeAddressWithNominatim({
+                address: geocodeQuery,
+                language: auth.user?.language || 'fr',
+                country: nextCountry || 'France',
+            });
+            nextLatitude = coords ? coords.lat.toString() : null;
+            nextLongitude = coords ? coords.lon.toString() : null;
+        }
+
         const [updatedClient] = await db
             .update(clients)
             .set({
@@ -85,13 +115,13 @@ export async function PUT(
                 lastName: lastName !== undefined ? lastName : existingClient.lastName,
                 phone: phone !== undefined ? phone : existingClient.phone,
                 email: email !== undefined ? email : existingClient.email,
-                address: address !== undefined ? address : existingClient.address,
-                city: city !== undefined ? city : existingClient.city,
-                postalCode: postalCode !== undefined ? postalCode : existingClient.postalCode,
-                country: country !== undefined ? country : existingClient.country,
+                address: nextAddress,
+                city: nextCity,
+                postalCode: nextPostalCode,
+                country: nextCountry,
+                latitude: nextLatitude,
+                longitude: nextLongitude,
                 notes: notes !== undefined ? notes : existingClient.notes,
-                medicalNotes: medicalNotes !== undefined ? medicalNotes : existingClient.medicalNotes,
-                allergies: allergies !== undefined ? allergies : existingClient.allergies,
                 emergencyContact: emergencyContact !== undefined ? emergencyContact : existingClient.emergencyContact,
                 isActive: isActive !== undefined ? isActive : existingClient.isActive,
                 updatedAt: new Date(),

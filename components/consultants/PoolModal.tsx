@@ -9,8 +9,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Consultant {
     id: string
-    firstName: string | null
-    lastName: string | null
+    businessName: string
 }
 
 interface Pool {
@@ -137,7 +136,7 @@ export function PoolModal({ consultant, onClose, onConsultantAdded, onShowAlert 
 
                 <div className="mb-4">
                     <p className="text-sm text-secondary mb-2">
-                        {t('pools.selectPoolFor', { name: consultant.firstName || '' })}
+                        {t('pools.selectPoolFor', { name: consultant.businessName || '' })}
                     </p>
                 </div>
 

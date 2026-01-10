@@ -9,7 +9,7 @@ import { hashPassword, generateToken } from '@/lib/utils/auth';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { email, password, firstName, lastName, profession, businessId, phone, country } = body;
+        const { email, password, businessName, profession, businessId, phone, country } = body;
 
         // Validation
         if (!email || !password) {
@@ -22,6 +22,21 @@ export async function POST(req: NextRequest) {
         if (password.length < 8) {
             return NextResponse.json(
                 { error: 'Password must be at least 8 characters long' },
+                { status: 400 }
+            );
+        }
+
+        // Validate business name
+        if (!businessName || businessName.trim().length === 0) {
+            return NextResponse.json(
+                { error: 'Business name is required' },
+                { status: 400 }
+            );
+        }
+
+        if (businessName.trim().length > 255) {
+            return NextResponse.json(
+                { error: 'Business name is too long (max 255 characters)' },
                 { status: 400 }
             );
         }
@@ -76,8 +91,7 @@ export async function POST(req: NextRequest) {
             .values({
                 email,
                 passwordHash,
-                firstName: firstName || null,
-                lastName: lastName || null,
+                businessName: businessName.trim(),
                 profession: profession || null,
                 businessId: businessIdCleaned || null,
                 phone: phoneCleaned || null,
@@ -102,7 +116,13 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         );
     } catch (error) {
-        console.error('Registration error:', error);
+        // Sanitize error for production (don't expose stack traces)
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (isProduction) {
+            console.error('Registration error:', error instanceof Error ? error.message : 'Unknown error');
+        } else {
+            console.error('Registration error:', error);
+        }
         return NextResponse.json(
             { error: 'Failed to register user' },
             { status: 500 }

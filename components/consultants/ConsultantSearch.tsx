@@ -10,8 +10,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 
 interface Consultant {
     id: string
-    firstName: string | null
-    lastName: string | null
+    businessName: string
     email: string
     phone: string | null
     profession: string | null
@@ -155,7 +154,7 @@ export function ConsultantSearch({ onShowAlert }: ConsultantSearchProps) {
             )}
 
             {!loading && hasSearched && consultants.length > 0 && (
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     {consultants.map((consultant) => (
                         <div
                             key={consultant.id}
@@ -164,7 +163,7 @@ export function ConsultantSearch({ onShowAlert }: ConsultantSearchProps) {
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="font-semibold text-primary">
-                                        {consultant.firstName} {consultant.lastName?.[0]?.toUpperCase()}.
+                                        {consultant.businessName}
                                     </span>
                                 </div>
                                 <div className="flex flex-wrap gap-2">

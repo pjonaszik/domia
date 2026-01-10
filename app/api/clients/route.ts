@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { clients } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { authenticateRequest } from '@/lib/utils/auth-middleware';
+import { formatAddressForGeocoding, geocodeAddressWithNominatim } from '@/lib/server/geocoding';
 
 export async function GET(req: NextRequest) {
     try {
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { firstName, lastName, phone, email, address, city, postalCode, country, notes, medicalNotes, allergies, emergencyContact } = body;
+        const { firstName, lastName, phone, email, address, city, postalCode, country, notes, emergencyContact } = body;
 
         if (!firstName || !lastName || !address || !city || !postalCode) {
             return NextResponse.json(
@@ -45,6 +46,19 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
+
+        // Best-effort geocoding (do not block creation if it fails)
+        const geocodeQuery = formatAddressForGeocoding({
+            address,
+            postalCode,
+            city,
+            country: country || 'France',
+        });
+        const coords = await geocodeAddressWithNominatim({
+            address: geocodeQuery,
+            language: auth.user?.language || 'fr',
+            country: country || 'France',
+        });
 
         const [newClient] = await db
             .insert(clients)
@@ -58,16 +72,22 @@ export async function POST(req: NextRequest) {
                 city,
                 postalCode,
                 country: country || 'France',
+                latitude: coords ? coords.lat.toString() : null,
+                longitude: coords ? coords.lon.toString() : null,
                 notes: notes || null,
-                medicalNotes: medicalNotes || null,
-                allergies: allergies || null,
                 emergencyContact: emergencyContact || null,
             })
             .returning();
 
         return NextResponse.json({ client: newClient }, { status: 201 });
     } catch (error) {
-        console.error('Create client error:', error);
+        // Sanitize error for production
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (isProduction) {
+            console.error('Create client error:', error instanceof Error ? error.message : 'Unknown error');
+        } else {
+            console.error('Create client error:', error);
+        }
         return NextResponse.json(
             { error: 'Failed to create client' },
             { status: 500 }

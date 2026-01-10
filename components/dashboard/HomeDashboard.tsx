@@ -4,8 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/utils/api-client'
-import { isToday, isTomorrow } from 'date-fns'
-import type { User, Appointment, Tour } from '@/lib/db/schema'
+import type { User, Tour } from '@/lib/db/schema'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { isCompany } from '@/lib/utils/user-type'
 import '@fortawesome/fontawesome-free/css/all.min.css'
@@ -26,7 +25,6 @@ interface QuickStats {
 export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardProps) {
     const { t } = useLanguage()
     const [stats, setStats] = useState<QuickStats | null>(null)
-    const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([])
     const [todayTours, setTodayTours] = useState<Tour[]>([])
     const [loading, setLoading] = useState(true)
     const isCompanyUser = isCompany(user)
@@ -49,53 +47,6 @@ export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardPr
                     todayTours: 0, // Will be calculated from tours
                     monthlyRevenue: statsData.stats?.revenue?.monthly || 0
                 })
-            }
-
-            // Load appointments - different logic for companies vs workers
-            const now = new Date()
-            const today = new Date(now)
-            today.setHours(0, 0, 0, 0)
-            const tomorrow = new Date(today)
-            tomorrow.setDate(tomorrow.getDate() + 1)
-            
-            // For companies: load active missions (started but not ended)
-            // For workers: load upcoming appointments (today and tomorrow)
-            const startDate = isCompanyUser ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) : today // Last 7 days for companies to catch ongoing missions
-            const endDate = isCompanyUser ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) : tomorrow // Next 30 days for companies
-            
-            const appointmentsResponse = await apiClient.get(
-                `/api/appointments?startDate=${startDate.toISOString().split('T')[0]}&endDate=${endDate.toISOString().split('T')[0]}`
-            )
-            if (appointmentsResponse.ok) {
-                const appointmentsData = await appointmentsResponse.json()
-                const appointments = appointmentsData.appointments || []
-                
-                let filtered: Appointment[] = []
-                if (isCompanyUser) {
-                    // For companies: show active missions (scheduled, started but not ended)
-                    filtered = appointments
-                        .filter((apt: Appointment) => {
-                            const startTime = new Date(apt.startTime)
-                            const endTime = new Date(apt.endTime)
-                            return apt.status === 'scheduled' && startTime <= now && endTime >= now
-                        })
-                        .sort((a: Appointment, b: Appointment) => {
-                            return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-                        })
-                        .slice(0, 5) // Show only 5 active missions
-                } else {
-                    // For workers: show upcoming appointments
-                    filtered = appointments
-                        .filter((apt: Appointment) => {
-                            const aptDate = new Date(apt.startTime)
-                            return aptDate >= today
-                        })
-                        .sort((a: Appointment, b: Appointment) => {
-                            return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-                        })
-                        .slice(0, 5) // Show only next 5
-                }
-                setUpcomingAppointments(filtered)
             }
 
             // Load today's tours
@@ -143,14 +94,14 @@ export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardPr
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <h2 className="text-2xl font-bold text-primary">
-                                {t('dashboard.welcomeUser', { name: user.firstName || t('common.user') })} 👋
+                                {t('dashboard.welcomeUser', { name: user.businessName || t('common.user') })} 👋
                             </h2>
                             <p className="text-secondary text-sm mt-1">
                                 {user.profession || t('dashboard.profession')}
                             </p>
                         </div>
                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-white text-2xl font-bold">
-                            {(user.firstName || user.email || 'U')[0].toUpperCase()}
+                            {(user.businessName || user.email || 'U')[0].toUpperCase()}
                         </div>
                     </div>
                     <div className="mt-4 pt-4 border-t-2 border-[var(--tertiary)]">
@@ -259,61 +210,6 @@ export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardPr
                 </div>
             </div>
 
-            {/* Upcoming Appointments / Active Missions */}
-            {upcomingAppointments.length > 0 && (
-                <div className="card-3d">
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-bold text-primary">
-                            {isCompanyUser ? t('dashboard.activeMissions') : t('dashboard.nextAppointments')}
-                        </h3>
-                    <button
-                        onClick={() => onNavigate?.('calendar')}
-                        className="text-sm text-[var(--primary)] font-semibold hover:underline"
-                        aria-label={isCompanyUser ? t('dashboard.activeMissions') : t('dashboard.viewAllAppointments')}
-                    >
-                        {t('dashboard.viewAll')}
-                    </button>
-                    </div>
-                    <div className="space-y-2">
-                        {upcomingAppointments.slice(0, 3).map((appointment) => {
-                            const aptDate = new Date(appointment.startTime)
-                            const isTodayAppt = isToday(aptDate)
-                            const isTomorrowAppt = isTomorrow(aptDate)
-                            
-                            return (
-                                <button
-                                    key={appointment.id}
-                                    type="button"
-                                    className="w-full text-left p-3 rounded-lg border-2 border-[var(--tertiary)] hover:border-[var(--primary)] transition-all cursor-pointer"
-                                    onClick={() => onNavigate?.('calendar')}
-                                    aria-label={`Rendez-vous à ${aptDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${appointment.serviceName || appointment.notes || 'Rendez-vous'}`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <i className="fas fa-clock text-[var(--secondary)]" aria-hidden="true"></i>
-                                                <time dateTime={aptDate.toISOString()} className="font-semibold text-primary">
-                                                    {aptDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                                </time>
-                                                {(isTodayAppt || isTomorrowAppt) && (
-                                                    <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--secondary)] text-white" aria-label={isTodayAppt ? t('dashboard.today') : t('dashboard.tomorrow')}>
-                                                        {isTodayAppt ? t('dashboard.today') : t('dashboard.tomorrow')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-secondary">
-                                                {appointment.serviceName || appointment.notes || t('dashboard.appointment')}
-                                            </p>
-                                        </div>
-                                        <i className="fas fa-chevron-right text-[var(--text-light)]" aria-hidden="true"></i>
-                                    </div>
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-            )}
-
             {/* Today's Tours - Only for workers */}
             {!isCompanyUser && todayTours.length > 0 && (
                 <div className="card-3d">
@@ -360,22 +256,6 @@ export function HomeDashboard({ user, onShowAlert, onNavigate }: HomeDashboardPr
                 </div>
             )}
 
-            {/* Empty States */}
-            {upcomingAppointments.length === 0 && (!isCompanyUser && todayTours.length === 0) && (
-                <div className="card-3d text-center py-8">
-                    <i className="fas fa-calendar-check text-4xl text-[var(--text-light)] mb-4"></i>
-                    <p className="text-secondary mb-2">
-                        {isCompanyUser ? t('dashboard.noMissions') : t('dashboard.noAppointments')}
-                    </p>
-                    <button
-                        onClick={() => onNavigate?.('calendar')}
-                        className="text-sm text-[var(--primary)] font-semibold hover:underline"
-                        aria-label={isCompanyUser ? t('dashboard.newMission') : t('dashboard.createNewAppointment')}
-                    >
-                        {isCompanyUser ? t('dashboard.newMission') : t('dashboard.createAppointment')}
-                    </button>
-                </div>
-            )}
         </div>
     )
 }

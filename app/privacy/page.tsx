@@ -1,148 +1,153 @@
-// /app/privacy/page.tsx
+// /app/privacy/page.tsx - Privacy Policy Page
 
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
 import { useRouter } from 'next/navigation'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 export default function PrivacyPage() {
+    const { t } = useLanguage()
     const router = useRouter()
-    const lastUpdated = 'Décembre 2024'
 
     return (
-        <div className="min-h-screen bg-checkered w-full max-w-full overflow-x-hidden">
-            <div
-                className="sticky top-0 z-10 text-center py-4 px-5 border-b-[5px]"
-                style={{
-                    background: 'var(--primary)',
-                    borderBottomColor: 'var(--primary-dark)',
-                    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)',
-                    paddingTop: 'calc(15px + env(safe-area-inset-top))'
-                }}
-            >
-                <button
-                    onClick={() => router.back()}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-2xl cursor-pointer hover:scale-110 transition-transform"
-                >
-                    <i className="fas fa-arrow-left"></i>
-                </button>
-                <h1 className="text-white text-xl font-bold">Politique de Confidentialité</h1>
-            </div>
+        <div className="min-h-screen bg-gradient-to-br from-[#f0f4f8] to-[#d9e2ec] p-4">
+            <div className="max-w-4xl mx-auto">
+                {/* Header */}
+                <div className="flex items-center gap-4 mb-6">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-3 rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow"
+                        aria-label="Retour"
+                    >
+                        <i className="fas fa-arrow-left text-[var(--primary)]" aria-hidden="true"></i>
+                    </button>
+                    <h1 className="text-3xl font-bold text-primary">
+                        <i className="fas fa-shield-alt mr-3" aria-hidden="true"></i>
+                        {t('account.privacyPolicy')}
+                    </h1>
+                </div>
 
-            <div className="container mx-auto max-w-2xl px-5 py-8 pb-24">
+                {/* Content */}
                 <div className="card-3d space-y-6">
-                        <section>
-                        <p className="text-sm text-secondary mb-4">
-                            Dernière mise à jour : {lastUpdated}
+                    <p className="text-sm text-secondary">
+                        <strong>Dernière mise à jour :</strong> 10 janvier 2026
+                    </p>
+
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">1. Introduction</h2>
+                        <p className="text-secondary">
+                            Domia s'engage à protéger votre vie privée et vos données personnelles. Cette politique de confidentialité 
+                            explique comment nous collectons, utilisons et protégeons vos informations conformément au Règlement Général 
+                            sur la Protection des Données (RGPD).
                         </p>
-                            <p className="mb-3">
-                            Domia ("nous", "notre") respecte votre vie privée et s'engage à protéger vos données personnelles.
-                            Cette Politique de Confidentialité explique comment nous collectons, utilisons et protégeons
-                            vos informations lorsque vous utilisez notre application.
+                    </section>
+
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">2. Données Collectées</h2>
+                        <p className="text-secondary mb-2">Nous collectons uniquement les données nécessaires au fonctionnement de la plateforme :</p>
+                        <ul className="list-disc list-inside space-y-1 text-secondary ml-4">
+                            <li><strong>Informations de compte</strong> : nom professionnel/entreprise, email, téléphone, profession</li>
+                            <li><strong>Informations de mission</strong> : adresses, horaires, notes professionnelles</li>
+                            <li><strong>Données de paiement</strong> : IBAN/BIC (stockés de manière sécurisée)</li>
+                            <li><strong>Données de localisation</strong> : coordonnées GPS pour le calcul de distance (optionnel)</li>
+                        </ul>
+                        <div className="mt-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+                            <p className="text-sm text-green-800">
+                                <i className="fas fa-check-circle mr-2" aria-hidden="true"></i>
+                                <strong>Nous ne collectons AUCUNE donnée médicale ou de santé.</strong> Ces informations doivent être 
+                                gérées directement entre le professionnel et le client, hors plateforme.
                             </p>
-                        </section>
+                        </div>
+                    </section>
 
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">1. Données Collectées</h3>
-                        <p className="mb-3">Nous collectons les informations suivantes :</p>
-                                <ul className="list-disc list-inside ml-4 space-y-1">
-                            <li><strong>Informations de compte :</strong> Email, nom, profession</li>
-                            <li><strong>Données professionnelles :</strong> Numéro ADELI, SIRET, numéro d'agrément</li>
-                            <li><strong>Données clients :</strong> Informations sur vos clients que vous saisissez</li>
-                            <li><strong>Données d'utilisation :</strong> Logs d'accès, statistiques d'utilisation</li>
-                            </ul>
-                        </section>
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">3. Utilisation des Données</h2>
+                        <p className="text-secondary mb-2">Vos données sont utilisées uniquement pour :</p>
+                        <ul className="list-disc list-inside space-y-1 text-secondary ml-4">
+                            <li>Gérer votre compte et authentification</li>
+                            <li>Faciliter la mise en relation entre professionnels et clients</li>
+                            <li>Gérer les missions, plannings et validations d'heures</li>
+                            <li>Traiter les paiements</li>
+                            <li>Envoyer des notifications relatives au service</li>
+                        </ul>
+                    </section>
 
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">2. Utilisation des Données</h3>
-                        <p className="mb-3">Nous utilisons vos données pour :</p>
-                            <ul className="list-disc list-inside ml-4 space-y-1">
-                            <li>Fournir et maintenir le service</li>
-                            <li>Améliorer l'application et l'expérience utilisateur</li>
-                            <li>Vous contacter concernant votre compte</li>
-                            <li>Respecter nos obligations légales</li>
-                            </ul>
-                        </section>
-
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">3. Protection des Données</h3>
-                            <p className="mb-3">
-                            Nous mettons en œuvre des mesures de sécurité appropriées pour protéger vos données :
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">4. Vos Droits (RGPD)</h2>
+                        <p className="text-secondary mb-2">Conformément au RGPD, vous disposez des droits suivants :</p>
+                        <ul className="list-disc list-inside space-y-1 text-secondary ml-4">
+                            <li><strong>Droit d'accès</strong> : Consulter vos données personnelles</li>
+                            <li><strong>Droit de rectification</strong> : Modifier vos données inexactes</li>
+                            <li><strong>Droit à l'effacement</strong> : Supprimer votre compte et vos données</li>
+                            <li><strong>Droit à la portabilité</strong> : Exporter vos données au format JSON</li>
+                            <li><strong>Droit d'opposition</strong> : Refuser certains traitements</li>
+                        </ul>
+                        <div className="mt-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                            <p className="text-sm text-blue-800">
+                                <i className="fas fa-info-circle mr-2" aria-hidden="true"></i>
+                                Pour exercer vos droits, rendez-vous dans <strong>Mon Compte → Protection des Données</strong> 
+                                ou contactez-nous à <a href="mailto:privacy@domia.fr" className="underline">privacy@domia.fr</a>
                             </p>
-                            <ul className="list-disc list-inside ml-4 space-y-1">
-                            <li>Chiffrement des mots de passe</li>
-                            <li>Connexions sécurisées (HTTPS)</li>
-                            <li>Accès restreint aux données</li>
-                            <li>Sauvegardes régulières</li>
-                            </ul>
-                        </section>
+                        </div>
+                    </section>
 
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">4. Partage des Données</h3>
-                            <p className="mb-3">
-                            Nous ne vendons, ne louons ni ne partageons vos données personnelles avec des tiers,
-                            sauf dans les cas suivants :
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">5. Sécurité</h2>
+                        <p className="text-secondary mb-2">Nous mettons en œuvre des mesures de sécurité strictes :</p>
+                        <ul className="list-disc list-inside space-y-1 text-secondary ml-4">
+                            <li>Chiffrement des mots de passe (bcrypt 12 rounds)</li>
+                            <li>Authentification sécurisée par JWT</li>
+                            <li>Connexion base de données SSL obligatoire</li>
+                            <li>Rate-limiting pour prévenir les abus</li>
+                            <li>Logs d'audit pour les actions sensibles</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">6. Conservation des Données</h2>
+                        <p className="text-secondary">
+                            Vos données sont conservées tant que votre compte est actif. En cas de suppression de compte, 
+                            vos données personnelles sont effacées sous 30 jours (sauf obligations légales de conservation).
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">7. Partage des Données</h2>
+                        <p className="text-secondary">
+                            Nous ne vendons ni ne louons vos données personnelles. Vos informations sont partagées uniquement 
+                            avec les professionnels/clients concernés par vos missions, et dans la limite strictement nécessaire 
+                            au service.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">8. Cookies</h2>
+                        <p className="text-secondary">
+                            Nous utilisons uniquement des cookies essentiels au fonctionnement de la plateforme (authentification, 
+                            préférences linguistiques). Aucun cookie de tracking publicitaire n'est utilisé.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-xl font-bold text-primary mb-3">9. Contact</h2>
+                        <p className="text-secondary">
+                            Pour toute question concernant cette politique de confidentialité ou l'exercice de vos droits :
+                        </p>
+                        <div className="mt-3 p-4 bg-gray-50 rounded-lg">
+                            <p className="text-secondary">
+                                <strong>Email :</strong> <a href="mailto:privacy@domia.fr" className="text-[var(--primary)] underline">privacy@domia.fr</a><br />
+                                <strong>Responsable du traitement :</strong> Domia<br />
+                                <strong>Délégué à la Protection des Données (DPO) :</strong> dpo@domia.fr
                             </p>
-                            <ul className="list-disc list-inside ml-4 space-y-1">
-                            <li>Avec votre consentement explicite</li>
-                            <li>Pour respecter une obligation légale</li>
-                            <li>Avec nos prestataires de services (hébergement, etc.) sous contrat de confidentialité</li>
-                            </ul>
-                        </section>
+                        </div>
+                    </section>
 
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">5. Vos Droits (RGPD)</h3>
-                        <p className="mb-3">Conformément au RGPD, vous avez le droit de :</p>
-                            <ul className="list-disc list-inside ml-4 space-y-1">
-                            <li>Accéder à vos données personnelles</li>
-                            <li>Rectifier vos données</li>
-                            <li>Supprimer vos données</li>
-                            <li>Vous opposer au traitement de vos données</li>
-                            <li>Demander la portabilité de vos données</li>
-                            </ul>
-                        </section>
-
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">6. Conservation des Données</h3>
-                            <p className="mb-3">
-                            Nous conservons vos données tant que votre compte est actif et selon les durées légales
-                            applicables. Vous pouvez demander la suppression de votre compte à tout moment.
-                            </p>
-                        </section>
-
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">7. Cookies</h3>
-                            <p className="mb-3">
-                            Nous utilisons des cookies et technologies similaires pour améliorer votre expérience
-                            et analyser l'utilisation de l'application.
-                            </p>
-                        </section>
-
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">8. Modifications</h3>
-                            <p className="mb-3">
-                            Nous pouvons modifier cette politique de confidentialité. Les modifications seront
-                            publiées sur cette page avec une date de mise à jour.
-                            </p>
-                        </section>
-
-                        <section>
-                        <h3 className="text-xl font-bold mb-3 text-primary">9. Contact</h3>
-                            <p className="mb-3">
-                            Pour toute question concernant cette politique de confidentialité ou pour exercer vos droits,
-                            veuillez nous contacter.
-                            </p>
-                        </section>
-
-                    <div className="pt-6 border-t-2 border-[var(--primary)]">
-                        <button
-                            onClick={() => router.back()}
-                            className="btn-primary w-full"
-                        >
-                            <i className="fas fa-arrow-left mr-2"></i>
-                            Retour
-                        </button>
-                    </div>
+                    <section className="pt-4 border-t-2 border-gray-200">
+                        <p className="text-xs text-secondary italic">
+                            Cette politique de confidentialité peut être mise à jour. La date de dernière modification est indiquée en haut de page.
+                        </p>
+                    </section>
                 </div>
             </div>
         </div>

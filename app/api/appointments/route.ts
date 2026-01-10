@@ -43,11 +43,22 @@ export async function GET(req: NextRequest) {
             conditions.push(eq(appointments.clientId, clientId));
         }
 
-        const appointmentList = await db
-            .select()
+        const rows = await db
+            .select({
+                appointment: appointments,
+                clientLatitude: clients.latitude,
+                clientLongitude: clients.longitude,
+            })
             .from(appointments)
+            .innerJoin(clients, eq(appointments.clientId, clients.id))
             .where(and(...conditions))
             .orderBy(desc(appointments.startTime));
+
+        const appointmentList = rows.map((r) => ({
+            ...r.appointment,
+            clientLatitude: r.clientLatitude,
+            clientLongitude: r.clientLongitude,
+        }));
 
         return NextResponse.json({ appointments: appointmentList });
     } catch (error) {

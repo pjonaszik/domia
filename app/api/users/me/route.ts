@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/utils/auth-middleware';
-import { updateUserHourlyRate } from '@/lib/server/user-profile';
+import { updateUserProfile } from '@/lib/server/user-profile';
 
 export async function GET(req: NextRequest) {
     try {
@@ -36,12 +36,25 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
         }
 
-        if (!('hourlyRate' in body)) {
+        if (
+            !('hourlyRate' in body) &&
+            !('address' in body) &&
+            !('city' in body) &&
+            !('postalCode' in body) &&
+            !('country' in body)
+        ) {
             return NextResponse.json({ error: 'No updatable fields provided' }, { status: 400 });
         }
 
         try {
-            const updatedUser = await updateUserHourlyRate(auth.user.id, (body as any).hourlyRate);
+            const updatedUser = await updateUserProfile(auth.user.id, {
+                hourlyRate: (body as any).hourlyRate,
+                address: (body as any).address,
+                city: (body as any).city,
+                postalCode: (body as any).postalCode,
+                country: (body as any).country,
+                language: auth.user.language || 'fr',
+            });
             return NextResponse.json({ user: updatedUser });
         } catch (e) {
             const message = e instanceof Error ? e.message : 'Invalid hourly rate.';

@@ -64,7 +64,13 @@ export async function POST(req: NextRequest) {
             token,
         });
     } catch (error) {
-        console.error('Login error:', error);
+        // Sanitize error for production (don't expose stack traces)
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (isProduction) {
+            console.error('Login error:', error instanceof Error ? error.message : 'Unknown error');
+        } else {
+            console.error('Login error:', error);
+        }
         return NextResponse.json(
             { error: 'Failed to login' },
             { status: 500 }

@@ -27,8 +27,6 @@ export function ClientForm({ client, onSave, onCancel, onShowAlert }: ClientForm
         postalCode: client?.postalCode || '',
         country: client?.country || 'France',
         notes: client?.notes || '',
-        medicalNotes: client?.medicalNotes || '',
-        allergies: client?.allergies || '',
         isActive: client?.isActive ?? true,
     })
 
@@ -163,30 +161,6 @@ export function ClientForm({ client, onSave, onCancel, onShowAlert }: ClientForm
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                />
-            </div>
-
-            <div>
-                <label className="block text-sm font-semibold text-primary mb-1">
-                    {t('clients.medicalNotes')}
-                </label>
-                <textarea
-                    value={formData.medicalNotes}
-                    onChange={(e) => setFormData({ ...formData, medicalNotes: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                />
-            </div>
-
-            <div>
-                <label className="block text-sm font-semibold text-primary mb-1">
-                    {t('clients.allergies')}
-                </label>
-                <input
-                    type="text"
-                    value={formData.allergies}
-                    onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
                     className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
             </div>

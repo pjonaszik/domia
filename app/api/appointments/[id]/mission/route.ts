@@ -111,8 +111,7 @@ export async function GET(
         const [clientUser] = await db
             .select({
                 id: users.id,
-                firstName: users.firstName,
-                lastName: users.lastName,
+                businessName: users.businessName,
                 email: users.email,
                 phone: users.phone,
             })

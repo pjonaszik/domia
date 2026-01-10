@@ -35,8 +35,7 @@ interface OfferWithClient {
     offer: Offer
     client: {
         id: string
-        firstName: string | null
-        lastName: string | null
+        businessName: string
         email: string | null
         phone: string | null
     }
@@ -182,7 +181,7 @@ export default function OffersPage({ onShowAlert }: OffersPageProps) {
                     <p className="text-secondary">{t('offers.noOffers')}</p>
                 </div>
             ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     {offers.map((item) => (
                         <div
                             key={item.offer.id}
@@ -195,7 +194,7 @@ export default function OffersPage({ onShowAlert }: OffersPageProps) {
                                         {item.offer.title}
                                     </h3>
                                     <p className="text-sm text-secondary">
-                                        {t('offers.fromClient', { name: `${item.client.firstName} ${item.client.lastName}` })}
+                                        {t('offers.fromClient', { name: item.client.businessName })}
                                     </p>
                                 </div>
                                 <span

@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import type { User } from '@/lib/db/schema'
 import { isCompany } from '@/lib/utils/user-type'
 
-type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'stats' | 'account' | 'offers' | 'pools'
+type Page = 'home' | 'tours' | 'clients' | 'calendar' | 'account' | 'offers' | 'pools'
 
 interface BottomNavProps {
     currentPage: Page
@@ -23,7 +23,6 @@ export function BottomNav({ currentPage, onPageChange, user }: BottomNavProps) {
     const baseItems: Array<{ id: Page; label: string; icon: string }> = [
         { id: 'home', label: t('nav.home').toUpperCase(), icon: 'fa-home' },
         { id: 'clients', label: (isCompanyUser ? t('nav.consultants') : t('nav.clients')).toUpperCase(), icon: 'fa-users' },
-        { id: 'stats', label: t('nav.stats').toUpperCase(), icon: 'fa-chart-bar' },
     ]
 
     // Add pools only for companies

@@ -248,7 +248,7 @@ export function MissionList({ refreshKey, onShowAlert, user }: MissionListProps)
                     <p className="text-secondary">{t('missions.noMissions')}</p>
                 </div>
             ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     {filteredMissions.map((mission, index) => (
                         <div
                             key={index}

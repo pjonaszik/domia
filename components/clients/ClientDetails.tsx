@@ -136,19 +136,6 @@ export function ClientDetails({ clientId, onEdit, onShowAlert }: ClientDetailsPr
                         </div>
                     )}
 
-                    {client.medicalNotes && (
-                        <div>
-                            <p className="text-sm text-secondary mb-1">{t('clients.medicalNotes')}</p>
-                            <p className="text-primary">{client.medicalNotes}</p>
-                        </div>
-                    )}
-
-                    {client.allergies && (
-                        <div>
-                            <p className="text-sm text-secondary mb-1">{t('clients.allergies')}</p>
-                            <p className="text-primary">{client.allergies}</p>
-                        </div>
-                    )}
                 </div>
             </div>
 
