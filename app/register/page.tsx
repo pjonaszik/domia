@@ -18,10 +18,7 @@ export default function RegisterPage() {
         email: '',
         password: '',
         confirmPassword: '',
-        firstName: '',
-        lastName: '',
-        companyName: '',
-        personType: 'physical' as 'physical' | 'legal',
+        businessName: '',
         profession: '',
         phone: '',
         country: 'France' as Country,
@@ -46,24 +43,11 @@ export default function RegisterPage() {
         setLoading(true)
         setError('')
 
-        // Validate required fields based on person type
-        if (formData.personType === 'physical') {
-            if (!formData.firstName) {
-                setError(t('auth.firstNameRequired'))
-                setLoading(false)
-                return
-            }
-            if (!formData.lastName) {
-                setError(t('auth.lastNameRequired'))
-                setLoading(false)
-                return
-            }
-        } else {
-            if (!formData.companyName) {
-                setError(t('auth.companyNameRequired'))
-                setLoading(false)
-                return
-            }
+        // Validate business name
+        if (!formData.businessName || formData.businessName.trim().length < 2) {
+            setError(t('auth.businessNameRequired'))
+            setLoading(false)
+            return
         }
 
         // Phone is required for both types
@@ -99,14 +83,8 @@ export default function RegisterPage() {
         }
 
         try {
-            // For physical person: use firstName/lastName
-            // For legal entity: use companyName as lastName, firstName as null
-            const firstName = formData.personType === 'physical' ? formData.firstName : null
-            const lastName = formData.personType === 'physical' ? formData.lastName : formData.companyName
-            const profession = formData.personType === 'physical' ? formData.profession : null
-            
             // Clean phone number (remove spaces)
-            const phoneCleaned = formData.phone ? formData.phone.replace(/\s/g, '') : undefined
+            const phoneCleaned = formData.phone.replace(/\s/g, '')
             
             // Clean business ID (remove spaces, convert to uppercase for VAT)
             const businessIdCleaned = formData.businessId.replace(/\s/g, '').toUpperCase()
@@ -114,12 +92,11 @@ export default function RegisterPage() {
             await register(
                 formData.email,
                 formData.password,
-                firstName || undefined,
-                lastName || undefined,
-                profession || undefined,
-                businessIdCleaned,
+                formData.businessName,
                 phoneCleaned,
-                formData.country
+                formData.profession || undefined,
+                formData.country,
+                businessIdCleaned
             )
             router.push('/dashboard')
         } catch (err) {
@@ -143,105 +120,49 @@ export default function RegisterPage() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4" aria-label={t('auth.register')}>
-                    {/* Type de personne - EN PREMIER */}
+                    {/* Business Name - Simplifié */}
                     <div>
-                        <label className="block text-sm font-semibold text-primary mb-2">
-                            {t('auth.personType')} *
+                        <label htmlFor="register-business-name" className="block text-sm font-semibold text-primary mb-1">
+                            {t('auth.businessName')} *
                         </label>
-                        <div className="flex gap-4">
-                            <label className="flex items-center cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="personType"
-                                    value="physical"
-                                    checked={formData.personType === 'physical'}
-                                    onChange={(e) => setFormData({ ...formData, personType: e.target.value as 'physical' | 'legal' })}
-                                    className="mr-2"
-                                />
-                                <span>{t('auth.personTypePhysical')}</span>
-                            </label>
-                            <label className="flex items-center cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="personType"
-                                    value="legal"
-                                    checked={formData.personType === 'legal'}
-                                    onChange={(e) => setFormData({ ...formData, personType: e.target.value as 'physical' | 'legal' })}
-                                    className="mr-2"
-                                />
-                                <span>{t('auth.personTypeLegal')}</span>
-                            </label>
-                        </div>
+                        <input
+                            id="register-business-name"
+                            type="text"
+                            required
+                            autoComplete="organization"
+                            value={formData.businessName}
+                            onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                            className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                            placeholder="Ex: Macia Interim, Jean Pascal, SARL Mirano..."
+                        />
+                        <p className="text-xs text-secondary mt-1">
+                            Nom de votre entreprise ou votre nom professionnel
+                        </p>
                     </div>
 
-                    {/* Champs conditionnels selon le type */}
-                    {formData.personType === 'physical' ? (
-                        <>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label htmlFor="register-firstname" className="block text-sm font-semibold text-primary mb-1">
-                                        {t('auth.firstName')} *
-                                    </label>
-                                    <input
-                                        id="register-firstname"
-                                        type="text"
-                                        required
-                                        autoComplete="given-name"
-                                        value={formData.firstName}
-                                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                        className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="register-lastname" className="block text-sm font-semibold text-primary mb-1">
-                                        {t('auth.lastName')} *
-                                    </label>
-                                    <input
-                                        id="register-lastname"
-                                        type="text"
-                                        required
-                                        autoComplete="family-name"
-                                        value={formData.lastName}
-                                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                        className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="register-profession" className="block text-sm font-semibold text-primary mb-1">
-                                    {t('auth.profession')}
-                                </label>
-                                <select
-                                    id="register-profession"
-                                    value={formData.profession}
-                                    onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
-                                    className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    aria-label={t('auth.selectProfessionAria')}
-                                >
-                                    <option value="">{t('auth.selectProfession')}</option>
-                                    {professions.map((prof) => (
-                                        <option key={prof.value} value={prof.value}>
-                                            {t(`auth.${prof.translationKey}`)}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </>
-                    ) : (
-                        <div>
-                            <label htmlFor="register-company-name" className="block text-sm font-semibold text-primary mb-1">
-                                {t('auth.companyName')} *
-                            </label>
-                            <input
-                                id="register-company-name"
-                                type="text"
-                                required
-                                value={formData.companyName}
-                                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                                className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                            />
-                        </div>
-                    )}
+                    {/* Profession - Optionnel */}
+                    <div>
+                        <label htmlFor="register-profession" className="block text-sm font-semibold text-primary mb-1">
+                            {t('auth.profession')} <span className="text-secondary text-xs">(optionnel)</span>
+                        </label>
+                        <select
+                            id="register-profession"
+                            value={formData.profession}
+                            onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                            className="w-full px-4 py-2 border-2 border-[var(--primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                            aria-label={t('auth.selectProfessionAria')}
+                        >
+                            <option value="">{t('auth.selectProfession')}</option>
+                            {professions.map((prof) => (
+                                <option key={prof.value} value={prof.value}>
+                                    {t(`auth.${prof.translationKey}`)}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-secondary mt-1">
+                            Laissez vide si vous êtes une entreprise envoyant des missions
+                        </p>
+                    </div>
 
                     {/* Email */}
                     <div>
@@ -337,7 +258,7 @@ export default function RegisterPage() {
                         />
                         <div id="business-id-help" className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                             <p className="text-xs text-[var(--text-primary)]">
-                                <strong className="text-[var(--primary)]">⚠️ {formData.personType === 'physical' ? businessIdInfo.noticePhysical : businessIdInfo.noticeLegal}</strong>
+                                <strong className="text-[var(--primary)]">⚠️ {formData.profession ? businessIdInfo.noticePhysical : businessIdInfo.noticeLegal}</strong>
                             </p>
                         </div>
                     </div>

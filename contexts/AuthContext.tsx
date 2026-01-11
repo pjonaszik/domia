@@ -12,7 +12,7 @@ interface AuthContextType {
     loading: boolean
     error: string | null
     login: (email: string, password: string) => Promise<void>
-    register: (email: string, password: string, firstName?: string, lastName?: string, profession?: string, businessId?: string, phone?: string, country?: string) => Promise<void>
+    register: (email: string, password: string, businessName: string, phone: string, profession?: string, country?: string, businessId?: string) => Promise<void>
     logout: () => void
     refreshUser: () => Promise<void>
     isAuthenticated: boolean
@@ -124,12 +124,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const register = useCallback(async (
         email: string,
         password: string,
-        firstName?: string,
-        lastName?: string,
+        businessName: string,
+        phone: string,
         profession?: string,
-        businessId?: string,
-        phone?: string,
-        country?: string
+        country?: string,
+        businessId?: string
     ) => {
         try {
             setLoading(true)
@@ -138,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const response = await apiClient.publicRequest('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, firstName, lastName, profession, businessId, phone, country }),
+                body: JSON.stringify({ email, password, businessName, phone, profession, country, businessId }),
             })
 
             if (!response.ok) {
